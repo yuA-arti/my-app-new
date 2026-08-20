@@ -2,12 +2,12 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>推しシーンログ</title>
-  <!-- React, ReactDOM, Babel, Tailwind CSS の読み込み（※アイコンエラーの原因だった外部ライブラリを排除） -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- スマホでも安定して高速読み込みできるCDN(cdnjs)に変更 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -16,7 +16,7 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // ★安全なSVGアイコンコンポーネント（エラー回避用）
+    // 軽量化したSVGアイコン
     const IconBook = () => <svg className="w-6 h-6 text-blue-600 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>;
     const IconSearch = () => <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
     const IconUp = () => <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" /></svg>;
@@ -26,50 +26,53 @@
     const IconBookmark = () => <svg className="w-3.5 h-3.5 text-gray-600 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>;
     const IconLock = () => <svg className="w-10 h-10 text-blue-500 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
 
-    // ★パスワード設定
     const CORRECT_PASSWORD = '1234';
 
     function App() {
-      // パスワード認証状態
       const [isAuthenticated, setIsAuthenticated] = useState(() => {
-        return sessionStorage.getItem('manga_log_auth') === 'true';
+        try {
+          return sessionStorage.getItem('manga_log_auth') === 'true';
+        } catch(e) {
+          return false;
+        }
       });
       const [passwordInput, setPasswordInput] = useState('');
       const [passError, setPassError] = useState(false);
 
-      // データ管理
       const [works, setWorks] = useState(() => {
-        const saved = localStorage.getItem('manga_scene_works');
-        return saved ? JSON.parse(saved) : [
-          {
-            id: 1,
-            title: '葬送のフリーレン',
-            author: '山田鐘人 / アベツカサ',
-            image: '',
-            site: 'サンデーうぇぶり',
-            tags: ['ファンタジー', 'ドラマ'],
-            memo: '旅の過程での人間模様が美しい',
-            scenes: [
-              {
-                id: 101,
-                chapter: '第1話',
-                page: '12p',
-                memo: 'ヒンメルの葬儀でのフリーレンの涙。「なんでもっと知ろうとしなかったんだろう」',
-                tags: ['名言', '感動']
-              }
-            ]
-          }
-        ];
+        try {
+          const saved = localStorage.getItem('manga_scene_works');
+          return saved ? JSON.parse(saved) : [
+            {
+              id: 1,
+              title: '葬送のフリーレン',
+              author: '山田鐘人 / アベツカサ',
+              image: '',
+              site: 'サンデーうぇぶり',
+              tags: ['ファンタジー', 'ドラマ'],
+              memo: '旅の過程での人間模様が美しい',
+              scenes: [
+                {
+                  id: 101,
+                  chapter: '第1話',
+                  page: '12p',
+                  memo: 'ヒンメルの葬儀でのフリーレンの涙。「なんでもっと知ろうとしなかったんだろう」',
+                  tags: ['名言', '感動']
+                }
+              ]
+            }
+          ];
+        } catch(e) {
+          return [];
+        }
       });
 
       const [searchWord, setSearchWord] = useState('');
       const [selectedTag, setSelectedTag] = useState('');
       const [selectedSite, setSelectedSite] = useState('');
 
-      // 各作品の開閉状態
       const [expandedMap, setExpandedMap] = useState({});
 
-      // 新規作品の入力用
       const [newTitle, setNewTitle] = useState('');
       const [newAuthor, setNewAuthor] = useState('');
       const [newImage, setNewImage] = useState('');
@@ -77,26 +80,27 @@
       const [newWorkTags, setNewWorkTags] = useState('');
       const [newWorkMemo, setNewWorkMemo] = useState('');
 
-      // シーン追加の入力用
       const [sceneInputs, setSceneInputs] = useState({});
 
       useEffect(() => {
-        localStorage.setItem('manga_scene_works', JSON.stringify(works));
+        try {
+          localStorage.setItem('manga_scene_works', JSON.stringify(works));
+        } catch(e) {}
       }, [works]);
 
-      // パスワード確認処理
       const handleLogin = (e) => {
         e.preventDefault();
         if (passwordInput === CORRECT_PASSWORD) {
           setIsAuthenticated(true);
-          sessionStorage.setItem('manga_log_auth', 'true');
+          try {
+            sessionStorage.setItem('manga_log_auth', 'true');
+          } catch(e) {}
           setPassError(false);
         } else {
           setPassError(true);
         }
       };
 
-      // 作品追加
       const addWork = (e) => {
         e.preventDefault();
         if (!newTitle.trim()) return;
@@ -107,7 +111,7 @@
           author: newAuthor,
           image: newImage,
           site: newSite,
-          tags: newWorkTags.split(',').map(t => t.trim()).filter(Boolean),
+          tags: newWorkTags ? newWorkTags.split(',').map(t => t.trim()).filter(Boolean) : [],
           memo: newWorkMemo,
           scenes: []
         };
@@ -116,7 +120,6 @@
         setNewTitle(''); setNewAuthor(''); setNewImage(''); setNewSite(''); setNewWorkTags(''); setNewWorkMemo('');
       };
 
-      // 作品削除
       const deleteWork = (id, e) => {
         e.stopPropagation();
         if (window.confirm('この作品と登録されたシーンをすべて削除しますか？')) {
@@ -124,12 +127,10 @@
         }
       };
 
-      // 開閉切り替え
       const toggleExpand = (id) => {
         setExpandedMap(prev => ({ ...prev, [id]: !prev[id] }));
       };
 
-      // シーン追加
       const addScene = (workId) => {
         const input = sceneInputs[workId] || {};
         if (!input.memo?.trim()) return;
@@ -152,7 +153,6 @@
         setSceneInputs({ ...sceneInputs, [workId]: { chapter: '', page: '', memo: '', tags: '' } });
       };
 
-      // シーン削除
       const deleteScene = (workId, sceneId) => {
         setWorks(works.map(w => {
           if (w.id === workId) {
@@ -162,7 +162,6 @@
         }));
       };
 
-      // 入力変更ハンドラ
       const handleSceneInputChange = (workId, field, value) => {
         setSceneInputs({
           ...sceneInputs,
@@ -170,32 +169,30 @@
         });
       };
 
-      // タグ・サイト抽出
       const allSites = Array.from(new Set(works.map(w => w.site).filter(Boolean)));
       const allTags = Array.from(new Set([
-        ...works.flatMap(w => w.tags),
-        ...works.flatMap(w => w.scenes.flatMap(s => s.tags))
+        ...works.flatMap(w => w.tags || []),
+        ...works.flatMap(w => (w.scenes || []).flatMap(s => s.tags || []))
       ]));
 
       const isSearching = searchWord !== '' || selectedTag !== '' || selectedSite !== '';
 
       const filteredWorks = works.filter(w => {
         const matchWord = searchWord === '' || 
-          w.title.toLowerCase().includes(searchWord.toLowerCase()) ||
-          w.author.toLowerCase().includes(searchWord.toLowerCase()) ||
-          w.memo.toLowerCase().includes(searchWord.toLowerCase()) ||
-          w.scenes.some(s => s.memo.toLowerCase().includes(searchWord.toLowerCase()));
+          (w.title && w.title.toLowerCase().includes(searchWord.toLowerCase())) ||
+          (w.author && w.author.toLowerCase().includes(searchWord.toLowerCase())) ||
+          (w.memo && w.memo.toLowerCase().includes(searchWord.toLowerCase())) ||
+          (w.scenes && w.scenes.some(s => s.memo && s.memo.toLowerCase().includes(searchWord.toLowerCase())));
 
         const matchSite = selectedSite === '' || w.site === selectedSite;
 
         const matchTag = selectedTag === '' || 
-          w.tags.includes(selectedTag) ||
-          w.scenes.some(s => s.tags.includes(selectedTag));
+          (w.tags && w.tags.includes(selectedTag)) ||
+          (w.scenes && w.scenes.some(s => s.tags && s.tags.includes(selectedTag)));
 
         return matchWord && matchSite && matchTag;
       });
 
-      // ログイン前画面
       if (!isAuthenticated) {
         return (
           <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
@@ -207,10 +204,10 @@
                 placeholder="パスワードを入力"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
-                className="w-full p-2 rounded border mb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 rounded border mb-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {passError && <p className="text-red-500 text-xs mb-2">パスワードが違います</p>}
-              <button type="submit" className="w-full p-2 bg-blue-600 text-white rounded font-bold text-sm hover:bg-blue-700">
+              <button type="submit" className="w-full p-2.5 bg-blue-600 text-white rounded font-bold text-sm hover:bg-blue-700">
                 解除する
               </button>
             </form>
@@ -218,127 +215,121 @@
         );
       }
 
-      // ログイン後メイン画面
       return (
-        <div className="max-w-2xl mx-auto p-4 text-gray-800 min-h-screen">
-          <h1 className="flex items-center gap-2 text-2xl font-bold mb-4 text-gray-900">
+        <div className="max-w-2xl mx-auto p-3 text-gray-800 min-h-screen">
+          <h1 className="flex items-center gap-2 text-xl font-bold mb-3 text-gray-900">
             <IconBook /> 推しシーンログ
           </h1>
 
-          {/* 検索・フィルターエリア */}
-          <div className="bg-white p-4 rounded-lg shadow-sm mb-4 border">
-            <div className="flex flex-wrap gap-2">
-              <div className="flex items-center gap-2 flex-1 min-w-[200px] border rounded px-2 py-1 bg-white">
+          <div className="bg-white p-3 rounded-lg shadow-sm mb-3 border">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex items-center gap-2 border rounded px-2 py-1.5 bg-white">
                 <IconSearch />
                 <input
                   type="text"
                   placeholder="フリーワード検索..."
                   value={searchWord}
                   onChange={e => setSearchWord(e.target.value)}
-                  className="w-full border-none outline-none text-sm py-1"
+                  className="w-full border-none outline-none text-sm"
                 />
               </div>
 
-              <select value={selectedSite} onChange={e => setSelectedSite(e.target.value)} className="p-2 text-xs rounded border bg-white">
-                <option value="">すべての掲載サイト</option>
-                {allSites.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <div className="flex gap-2">
+                <select value={selectedSite} onChange={e => setSelectedSite(e.target.value)} className="flex-1 p-1.5 text-xs rounded border bg-white">
+                  <option value="">すべての掲載サイト</option>
+                  {allSites.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
 
-              <select value={selectedTag} onChange={e => setSelectedTag(e.target.value)} className="p-2 text-xs rounded border bg-white">
-                <option value="">すべてのタグ</option>
-                {allTags.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
+                <select value={selectedTag} onChange={e => setSelectedTag(e.target.value)} className="flex-1 p-1.5 text-xs rounded border bg-white">
+                  <option value="">すべてのタグ</option>
+                  {allTags.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* 作品追加フォーム */}
-          <details className="bg-white p-4 rounded-lg shadow-sm mb-4 border">
+          <details className="bg-white p-3 rounded-lg shadow-sm mb-3 border">
             <summary className="font-bold cursor-pointer text-blue-600 text-sm">＋ 新しい作品を登録する</summary>
             <form onSubmit={addWork} className="flex flex-col gap-2 mt-3 text-xs">
               <div className="flex gap-2">
-                <input type="text" placeholder="作品タイトル（必須）" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="flex-[2] p-2 rounded border" />
-                <input type="text" placeholder="著者名" value={newAuthor} onChange={e => setNewAuthor(e.target.value)} className="flex-1 p-2 rounded border" />
+                <input type="text" placeholder="作品タイトル（必須）" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="flex-[2] p-2 rounded border text-sm" />
+                <input type="text" placeholder="著者名" value={newAuthor} onChange={e => setNewAuthor(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
               </div>
               <div className="flex gap-2">
-                <input type="text" placeholder="掲載サイト（例：ピッコマ）" value={newSite} onChange={e => setNewSite(e.target.value)} className="flex-1 p-2 rounded border" />
-                <input type="text" placeholder="作品タグ（カンマ区切り）" value={newWorkTags} onChange={e => setNewWorkTags(e.target.value)} className="flex-1 p-2 rounded border" />
+                <input type="text" placeholder="掲載サイト（例：ピッコマ）" value={newSite} onChange={e => setNewSite(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
+                <input type="text" placeholder="作品タグ（カンマ区切り）" value={newWorkTags} onChange={e => setNewWorkTags(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
               </div>
-              <input type="text" placeholder="画像URL（任意）" value={newImage} onChange={e => setNewImage(e.target.value)} className="p-2 rounded border" />
-              <textarea placeholder="作品全体のメモ" value={newWorkMemo} onChange={e => setNewWorkMemo(e.target.value)} className="p-2 rounded border h-16" />
-              <button type="submit" className="p-2 bg-blue-600 text-white rounded font-bold mt-1 hover:bg-blue-700">作品を保存</button>
+              <input type="text" placeholder="画像URL（任意）" value={newImage} onChange={e => setNewImage(e.target.value)} className="p-2 rounded border text-sm" />
+              <textarea placeholder="作品全体のメモ" value={newWorkMemo} onChange={e => setNewWorkMemo(e.target.value)} className="p-2 rounded border h-16 text-sm" />
+              <button type="submit" className="p-2.5 bg-blue-600 text-white rounded font-bold text-sm mt-1">作品を保存</button>
             </form>
           </details>
 
-          {/* 作品一覧 */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {filteredWorks.map(work => {
               const isOpen = isSearching ? true : !!expandedMap[work.id];
 
               return (
                 <div key={work.id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
-                  
-                  {/* ヘッダー（クリックで開閉） */}
                   <div 
                     onClick={() => toggleExpand(work.id)} 
-                    className={`p-4 flex gap-3 cursor-pointer select-none hover:bg-gray-50/80 ${isOpen ? 'border-b' : ''}`}
+                    className={`p-3 flex gap-3 cursor-pointer select-none active:bg-gray-100 ${isOpen ? 'border-b' : ''}`}
                   >
                     {work.image ? (
-                      <img src={work.image} alt={work.title} className="w-14 h-20 object-cover rounded" />
+                      <img src={work.image} alt={work.title} className="w-12 h-16 object-cover rounded flex-shrink-0" />
                     ) : (
-                      <div className="w-14 h-20 bg-gray-100 rounded flex items-center justify-center">
+                      <div className="w-12 h-16 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
                         <IconBook />
                       </div>
                     )}
 
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h2 className="font-bold text-base text-blue-600">{work.title}</h2>
-                          {work.author && <span className="text-xs text-gray-500 mr-2">{work.author}</span>}
-                          {work.site && <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{work.site}</span>}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-1">
+                        <div className="truncate">
+                          <h2 className="font-bold text-sm text-blue-600 truncate">{work.title}</h2>
+                          {work.author && <span className="text-[11px] text-gray-500 mr-2">{work.author}</span>}
+                          {work.site && <span className="text-[10px] bg-blue-50 text-blue-600 px-1 py-0.5 rounded">{work.site}</span>}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-gray-400 mr-1">推しシーン: {work.scenes.length}件</span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <span className="text-[10px] text-gray-400">{work.scenes?.length || 0}件</span>
                           {isOpen ? <IconUp /> : <IconDown />}
-                          <button onClick={(e) => deleteWork(work.id, e)} className="p-1 rounded hover:bg-gray-200">
+                          <button onClick={(e) => deleteWork(work.id, e)} className="p-1">
                             <IconTrash />
                           </button>
                         </div>
                       </div>
 
-                      {work.memo && <p className="text-xs text-gray-600 mt-2">{work.memo}</p>}
+                      {work.memo && <p className="text-xs text-gray-600 mt-1 line-clamp-2">{work.memo}</p>}
 
-                      {work.tags.length > 0 && (
-                        <div className="flex gap-1 flex-wrap mt-2">
+                      {work.tags && work.tags.length > 0 && (
+                        <div className="flex gap-1 flex-wrap mt-1.5">
                           {work.tags.map((t, idx) => (
-                            <span key={idx} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">#{t}</span>
+                            <span key={idx} className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">#{t}</span>
                           ))}
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* 子データ：推しシーン一覧 & 追加フォーム */}
                   {isOpen && (
-                    <div className="bg-gray-50 p-4">
+                    <div className="bg-gray-50 p-3">
                       <h3 className="text-xs font-bold text-gray-600 mb-2 flex items-center gap-1">
-                        <IconBookmark /> 推しシーン ({work.scenes.length})
+                        <IconBookmark /> 推しシーン ({work.scenes?.length || 0})
                       </h3>
 
-                      {/* シーン一覧 */}
                       <div className="flex flex-col gap-2 mb-3">
-                        {work.scenes.map(scene => (
-                          <div key={scene.id} className="bg-white border p-2.5 rounded shadow-sm relative">
+                        {work.scenes && work.scenes.map(scene => (
+                          <div key={scene.id} className="bg-white border p-2.5 rounded shadow-sm">
                             <div className="flex justify-between mb-1">
                               <span className="text-xs font-bold text-blue-600">
                                 {scene.chapter} {scene.page && `(${scene.page})`}
                               </span>
-                              <button onClick={() => deleteScene(work.id, scene.id)} className="p-0.5 rounded hover:bg-gray-100">
+                              <button onClick={() => deleteScene(work.id, scene.id)} className="p-0.5">
                                 <IconTrashSmall />
                               </button>
                             </div>
-                            <p className="text-xs text-gray-800 whitespace-pre-wrap mb-1.5">{scene.memo}</p>
-                            {scene.tags.length > 0 && (
+                            <p className="text-xs text-gray-800 whitespace-pre-wrap mb-1">{scene.memo}</p>
+                            {scene.tags && scene.tags.length > 0 && (
                               <div className="flex gap-1 flex-wrap">
                                 {scene.tags.map((st, idx) => (
                                   <span key={idx} className="text-[9px] text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded">#{st}</span>
@@ -349,30 +340,29 @@
                         ))}
                       </div>
 
-                      {/* シーン追加フォーム */}
-                      <div className="border-t border-dashed pt-3 text-xs">
-                        <div className="flex gap-1 mb-1">
+                      <div className="border-t border-dashed pt-2.5 text-xs">
+                        <div className="flex gap-1 mb-1.5">
                           <input
                             type="text"
-                            placeholder="話数・巻数（例: 第12話）"
+                            placeholder="話数（例: 12話）"
                             value={sceneInputs[work.id]?.chapter || ''}
                             onChange={e => handleSceneInputChange(work.id, 'chapter', e.target.value)}
-                            className="flex-1 p-1.5 rounded border"
+                            className="flex-1 p-2 rounded border text-xs"
                           />
                           <input
                             type="text"
                             placeholder="ページ"
                             value={sceneInputs[work.id]?.page || ''}
                             onChange={e => handleSceneInputChange(work.id, 'page', e.target.value)}
-                            className="w-20 p-1.5 rounded border"
+                            className="w-20 p-2 rounded border text-xs"
                           />
                         </div>
                         <input
                           type="text"
-                          placeholder="シーンタグ（カンマ区切り：名言, 伏線回収）"
+                          placeholder="タグ（カンマ区切り：名言, 伏線）"
                           value={sceneInputs[work.id]?.tags || ''}
                           onChange={e => handleSceneInputChange(work.id, 'tags', e.target.value)}
-                          className="w-full p-1.5 rounded border mb-1"
+                          className="w-full p-2 rounded border mb-1.5 text-xs"
                         />
                         <div className="flex gap-1">
                           <input
@@ -380,11 +370,11 @@
                             placeholder="推しシーン・メモ（必須）"
                             value={sceneInputs[work.id]?.memo || ''}
                             onChange={e => handleSceneInputChange(work.id, 'memo', e.target.value)}
-                            className="flex-1 p-1.5 rounded border"
+                            className="flex-1 p-2 rounded border text-xs"
                           />
                           <button
                             onClick={() => addScene(work.id)}
-                            className="px-3 py-1.5 bg-green-600 text-white rounded font-bold hover:bg-green-700"
+                            className="px-3 py-2 bg-green-600 text-white rounded font-bold text-xs"
                           >
                             追加
                           </button>
@@ -401,7 +391,12 @@
       );
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    // スマホブラウザでのレンダリング安全処理
+    const rootElement = document.getElementById('root');
+    if (rootElement) {
+      const root = ReactDOM.createRoot(rootElement);
+      root.render(<App />);
+    }
   </script>
 </body>
 </html>
