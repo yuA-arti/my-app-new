@@ -4,12 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>推しシーンログ</title>
-  <!-- React, ReactDOM, Babel, Tailwind CSS, Lucide Icons の読み込み -->
+  <!-- React, ReactDOM, Babel, Tailwind CSS の読み込み（※アイコンエラーの原因だった外部ライブラリを排除） -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
   <div id="root"></div>
@@ -17,16 +16,15 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // アイコンコンポーネントの簡易定義（Lucideアイコン用）
-    const BookOpen = () => <i data-lucide="book-open" class="w-6 h-6 text-blue-600 inline-block"></i>;
-    const SearchIcon = () => <i data-lucide="search" class="w-4 h-4 text-gray-500"></i>;
-    const ExternalLink = () => <i data-lucide="external-link" class="w-3 h-3 inline-block ml-1"></i>;
-    const ChevronUp = () => <i data-lucide="chevron-up" class="w-5 h-5 text-gray-500"></i>;
-    const ChevronDown = () => <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500"></i>;
-    const Trash2 = () => <i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i>;
-    const Trash2Small = () => <i data-lucide="trash-2" class="w-3.5 h-3.5 text-gray-400 hover:text-red-500"></i>;
-    const Bookmark = () => <i data-lucide="bookmark" class="w-3.5 h-3.5 text-gray-600 inline-block"></i>;
-    const Lock = () => <i data-lucide="lock" class="w-10 h-10 text-blue-500 mb-2"></i>;
+    // ★安全なSVGアイコンコンポーネント（エラー回避用）
+    const IconBook = () => <svg className="w-6 h-6 text-blue-600 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>;
+    const IconSearch = () => <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
+    const IconUp = () => <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" /></svg>;
+    const IconDown = () => <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>;
+    const IconTrash = () => <svg className="w-4 h-4 text-red-500 hover:text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+    const IconTrashSmall = () => <svg className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+    const IconBookmark = () => <svg className="w-3.5 h-3.5 text-gray-600 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>;
+    const IconLock = () => <svg className="w-10 h-10 text-blue-500 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
 
     // ★パスワード設定
     const CORRECT_PASSWORD = '1234';
@@ -84,10 +82,7 @@
 
       useEffect(() => {
         localStorage.setItem('manga_scene_works', JSON.stringify(works));
-        if (window.lucide) {
-          window.lucide.createIcons();
-        }
-      }, [works, isAuthenticated, expandedMap]);
+      }, [works]);
 
       // パスワード確認処理
       const handleLogin = (e) => {
@@ -205,7 +200,7 @@
         return (
           <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
             <form onSubmit={handleLogin} className="bg-white p-6 rounded-xl shadow-md text-center w-80">
-              <div className="flex justify-center"><Lock /></div>
+              <IconLock />
               <h2 className="text-xl font-bold mb-4">推しシーンログ</h2>
               <input
                 type="password"
@@ -215,7 +210,7 @@
                 className="w-full p-2 rounded border mb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {passError && <p className="text-red-500 text-xs mb-2">パスワードが違います</p>}
-              <button type="submit" className="w-full p-2 bg-blue-600 text-white rounded font-bold text-sm">
+              <button type="submit" className="w-full p-2 bg-blue-600 text-white rounded font-bold text-sm hover:bg-blue-700">
                 解除する
               </button>
             </form>
@@ -227,14 +222,14 @@
       return (
         <div className="max-w-2xl mx-auto p-4 text-gray-800 min-h-screen">
           <h1 className="flex items-center gap-2 text-2xl font-bold mb-4 text-gray-900">
-            <BookOpen /> 推しシーンログ
+            <IconBook /> 推しシーンログ
           </h1>
 
           {/* 検索・フィルターエリア */}
           <div className="bg-white p-4 rounded-lg shadow-sm mb-4 border">
             <div className="flex flex-wrap gap-2">
               <div className="flex items-center gap-2 flex-1 min-w-[200px] border rounded px-2 py-1 bg-white">
-                <SearchIcon />
+                <IconSearch />
                 <input
                   type="text"
                   placeholder="フリーワード検索..."
@@ -261,7 +256,7 @@
             <summary className="font-bold cursor-pointer text-blue-600 text-sm">＋ 新しい作品を登録する</summary>
             <form onSubmit={addWork} className="flex flex-col gap-2 mt-3 text-xs">
               <div className="flex gap-2">
-                <input type="text" placeholder="作品タイトル（必須）" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="flex-2 p-2 rounded border" />
+                <input type="text" placeholder="作品タイトル（必須）" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="flex-[2] p-2 rounded border" />
                 <input type="text" placeholder="著者名" value={newAuthor} onChange={e => setNewAuthor(e.target.value)} className="flex-1 p-2 rounded border" />
               </div>
               <div className="flex gap-2">
@@ -270,7 +265,7 @@
               </div>
               <input type="text" placeholder="画像URL（任意）" value={newImage} onChange={e => setNewImage(e.target.value)} className="p-2 rounded border" />
               <textarea placeholder="作品全体のメモ" value={newWorkMemo} onChange={e => setNewWorkMemo(e.target.value)} className="p-2 rounded border h-16" />
-              <button type="submit" className="p-2 bg-blue-600 text-white rounded font-bold mt-1">作品を保存</button>
+              <button type="submit" className="p-2 bg-blue-600 text-white rounded font-bold mt-1 hover:bg-blue-700">作品を保存</button>
             </form>
           </details>
 
@@ -285,13 +280,13 @@
                   {/* ヘッダー（クリックで開閉） */}
                   <div 
                     onClick={() => toggleExpand(work.id)} 
-                    className={`p-4 flex gap-3 cursor-pointer select-none ${isOpen ? 'border-b' : ''}`}
+                    className={`p-4 flex gap-3 cursor-pointer select-none hover:bg-gray-50/80 ${isOpen ? 'border-b' : ''}`}
                   >
                     {work.image ? (
                       <img src={work.image} alt={work.title} className="w-14 h-20 object-cover rounded" />
                     ) : (
                       <div className="w-14 h-20 bg-gray-100 rounded flex items-center justify-center">
-                        <BookOpen />
+                        <IconBook />
                       </div>
                     )}
 
@@ -304,9 +299,9 @@
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-gray-400 mr-1">推しシーン: {work.scenes.length}件</span>
-                          {isOpen ? <ChevronUp /> : <ChevronDown />}
-                          <button onClick={(e) => deleteWork(work.id, e)} className="p-1">
-                            <Trash2 />
+                          {isOpen ? <IconUp /> : <IconDown />}
+                          <button onClick={(e) => deleteWork(work.id, e)} className="p-1 rounded hover:bg-gray-200">
+                            <IconTrash />
                           </button>
                         </div>
                       </div>
@@ -327,7 +322,7 @@
                   {isOpen && (
                     <div className="bg-gray-50 p-4">
                       <h3 className="text-xs font-bold text-gray-600 mb-2 flex items-center gap-1">
-                        <Bookmark /> 推しシーン ({work.scenes.length})
+                        <IconBookmark /> 推しシーン ({work.scenes.length})
                       </h3>
 
                       {/* シーン一覧 */}
@@ -338,8 +333,8 @@
                               <span className="text-xs font-bold text-blue-600">
                                 {scene.chapter} {scene.page && `(${scene.page})`}
                               </span>
-                              <button onClick={() => deleteScene(work.id, scene.id)}>
-                                <Trash2Small />
+                              <button onClick={() => deleteScene(work.id, scene.id)} className="p-0.5 rounded hover:bg-gray-100">
+                                <IconTrashSmall />
                               </button>
                             </div>
                             <p className="text-xs text-gray-800 whitespace-pre-wrap mb-1.5">{scene.memo}</p>
@@ -389,7 +384,7 @@
                           />
                           <button
                             onClick={() => addScene(work.id)}
-                            className="px-3 py-1.5 bg-green-600 text-white rounded font-bold"
+                            className="px-3 py-1.5 bg-green-600 text-white rounded font-bold hover:bg-green-700"
                           >
                             追加
                           </button>
