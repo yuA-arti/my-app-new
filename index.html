@@ -20,7 +20,19 @@
     const IconSearch = () => <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
     const IconUp = () => <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" /></svg>;
     const IconDown = () => <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>;
-    const IconEdit = () => <svg className="w-4 h-4 text-blue-500 hover:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
+    
+    // わかりやすいペン（鉛筆）マークアイコン
+    const IconPencil = () => (
+      <svg className="w-4 h-4 text-blue-600 hover:text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      </svg>
+    );
+    const IconPencilSmall = () => (
+      <svg className="w-3.5 h-3.5 text-blue-500 hover:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      </svg>
+    );
+
     const IconTrash = () => <svg className="w-4 h-4 text-red-500 hover:text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
     const IconTrashSmall = () => <svg className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
     const IconBookmark = () => <svg className="w-3.5 h-3.5 text-gray-600 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>;
@@ -81,6 +93,10 @@
 
       // シーン入力状態
       const [sceneInputs, setSceneInputs] = useState({});
+
+      // シーン編集モード状態
+      const [editingSceneId, setEditingSceneId] = useState(null);
+      const [editSceneData, setEditSceneData] = useState({});
 
       const fileInputRef = useRef(null);
 
@@ -170,7 +186,7 @@
         setExpandedMap(prev => ({ ...prev, [id]: !prev[id] }));
       };
 
-      // シーン追加（修正ポイント）
+      // シーン追加
       const addScene = (workId, e) => {
         if (e) e.preventDefault();
         const input = sceneInputs[workId] || {};
@@ -192,6 +208,47 @@
         }));
 
         setSceneInputs({ ...sceneInputs, [workId]: { chapter: '', page: '', memo: '', tags: '' } });
+      };
+
+      // シーン編集開始
+      const startEditScene = (scene, e) => {
+        e.stopPropagation();
+        setEditingSceneId(scene.id);
+        setEditSceneData({
+          chapter: scene.chapter || '',
+          page: scene.page || '',
+          memo: scene.memo || '',
+          tags: (scene.tags || []).join(', ')
+        });
+      };
+
+      // シーン編集保存
+      const saveEditScene = (workId, sceneId, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!editSceneData.memo.trim()) return;
+
+        setWorks(works.map(w => {
+          if (w.id === workId) {
+            return {
+              ...w,
+              scenes: w.scenes.map(s => {
+                if (s.id === sceneId) {
+                  return {
+                    ...s,
+                    chapter: editSceneData.chapter,
+                    page: editSceneData.page,
+                    memo: editSceneData.memo,
+                    tags: editSceneData.tags ? editSceneData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+                  };
+                }
+                return s;
+              })
+            };
+          }
+          return w;
+        }));
+        setEditingSceneId(null);
       };
 
       const deleteScene = (workId, sceneId) => {
@@ -292,7 +349,6 @@
             <h1 className="flex items-center gap-2 text-xl font-bold text-gray-900">
               <IconBook /> 推しシーンログ
             </h1>
-            {/* バックアップボタン群 */}
             <div className="flex gap-1.5 text-[10px]">
               <button onClick={exportBackup} className="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-gray-700 font-bold">
                 保存(書き出し)
@@ -399,12 +455,13 @@
                             {work.author && <span className="text-[11px] text-gray-500 mr-2">{work.author}</span>}
                             {work.site && <span className="text-[10px] bg-blue-50 text-blue-600 px-1 py-0.5 rounded">{work.site}</span>}
                           </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <span className="text-[10px] text-gray-400">{work.scenes?.length || 0}件</span>
-                            <button onClick={(e) => startEditWork(work, e)} title="作品情報を編集" className="p-1 hover:bg-gray-100 rounded">
-                              <IconEdit />
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <span className="text-[10px] text-gray-400 mr-1">{work.scenes?.length || 0}件</span>
+                            {/* 明確なペンマークアイコンに変更 */}
+                            <button onClick={(e) => startEditWork(work, e)} title="作品情報を編集" className="p-1 hover:bg-gray-200 rounded">
+                              <IconPencil />
                             </button>
-                            <button onClick={(e) => deleteWork(work.id, e)} title="削除" className="p-1 hover:bg-gray-100 rounded">
+                            <button onClick={(e) => deleteWork(work.id, e)} title="削除" className="p-1 hover:bg-gray-200 rounded">
                               <IconTrash />
                             </button>
                             {isOpen ? <IconUp /> : <IconDown />}
@@ -432,29 +489,77 @@
                       </h3>
 
                       <div className="flex flex-col gap-2 mb-3">
-                        {work.scenes && work.scenes.map(scene => (
-                          <div key={scene.id} className="bg-white border p-2.5 rounded shadow-sm">
-                            <div className="flex justify-between mb-1">
-                              <span className="text-xs font-bold text-blue-600">
-                                {scene.chapter} {scene.page && `(${scene.page})`}
-                              </span>
-                              <button onClick={() => deleteScene(work.id, scene.id)} className="p-0.5">
-                                <IconTrashSmall />
-                              </button>
-                            </div>
-                            <p className="text-xs text-gray-800 whitespace-pre-wrap mb-1">{scene.memo}</p>
-                            {scene.tags && scene.tags.length > 0 && (
-                              <div className="flex gap-1 flex-wrap">
-                                {scene.tags.map((st, idx) => (
-                                  <span key={idx} className="text-[9px] text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded">#{st}</span>
-                                ))}
+                        {work.scenes && work.scenes.map(scene => {
+                          const isSceneEditing = editingSceneId === scene.id;
+
+                          return isSceneEditing ? (
+                            /* シーン編集フォーム */
+                            <form key={scene.id} onSubmit={(e) => saveEditScene(work.id, scene.id, e)} className="bg-blue-50/70 border border-blue-200 p-2.5 rounded shadow-sm text-xs flex flex-col gap-1.5">
+                              <div className="flex gap-1">
+                                <input
+                                  type="text"
+                                  placeholder="話数"
+                                  value={editSceneData.chapter}
+                                  onChange={e => setEditSceneData({...editSceneData, chapter: e.target.value})}
+                                  className="flex-1 p-1.5 rounded border text-xs"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="ページ"
+                                  value={editSceneData.page}
+                                  onChange={e => setEditSceneData({...editSceneData, page: e.target.value})}
+                                  className="w-20 p-1.5 rounded border text-xs"
+                                />
                               </div>
-                            )}
-                          </div>
-                        ))}
+                              <input
+                                type="text"
+                                placeholder="タグ"
+                                value={editSceneData.tags}
+                                onChange={e => setEditSceneData({...editSceneData, tags: e.target.value})}
+                                className="w-full p-1.5 rounded border text-xs"
+                              />
+                              <textarea
+                                placeholder="推しシーン・メモ"
+                                value={editSceneData.memo}
+                                onChange={e => setEditSceneData({...editSceneData, memo: e.target.value})}
+                                className="w-full p-1.5 rounded border text-xs h-16"
+                              />
+                              <div className="flex justify-end gap-1.5 mt-0.5">
+                                <button type="button" onClick={() => setEditingSceneId(null)} className="px-2 py-1 bg-gray-300 text-gray-700 rounded text-[11px]">キャンセル</button>
+                                <button type="submit" className="px-2.5 py-1 bg-blue-600 text-white rounded font-bold text-[11px]">保存</button>
+                              </div>
+                            </form>
+                          ) : (
+                            /* シーン通常表示 */
+                            <div key={scene.id} className="bg-white border p-2.5 rounded shadow-sm">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-xs font-bold text-blue-600">
+                                  {scene.chapter} {scene.page && `(${scene.page})`}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  {/* シーン編集ボタン（ペンマーク） */}
+                                  <button onClick={(e) => startEditScene(scene, e)} className="p-0.5 hover:bg-gray-100 rounded" title="シーンを編集">
+                                    <IconPencilSmall />
+                                  </button>
+                                  <button onClick={() => deleteScene(work.id, scene.id)} className="p-0.5 hover:bg-gray-100 rounded" title="シーンを削除">
+                                    <IconTrashSmall />
+                                  </button>
+                                </div>
+                              </div>
+                              <p className="text-xs text-gray-800 whitespace-pre-wrap mb-1">{scene.memo}</p>
+                              {scene.tags && scene.tags.length > 0 && (
+                                <div className="flex gap-1 flex-wrap">
+                                  {scene.tags.map((st, idx) => (
+                                    <span key={idx} className="text-[9px] text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded">#{st}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
 
-                      {/* シーン追加フォーム（動作改善） */}
+                      {/* シーン追加フォーム */}
                       <form onSubmit={(e) => addScene(work.id, e)} className="border-t border-dashed pt-2.5 text-xs">
                         <div className="flex gap-1 mb-1.5">
                           <input
