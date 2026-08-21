@@ -21,7 +21,6 @@
     const IconUp = () => <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" /></svg>;
     const IconDown = () => <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>;
     
-    // わかりやすいペン（鉛筆）マークアイコン
     const IconPencil = () => (
       <svg className="w-4 h-4 text-blue-600 hover:text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -97,6 +96,9 @@
       // シーン編集モード状態
       const [editingSceneId, setEditingSceneId] = useState(null);
       const [editSceneData, setEditSceneData] = useState({});
+
+      // 画像拡大表示用状態
+      const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
       const fileInputRef = useRef(null);
 
@@ -441,7 +443,15 @@
                       className={`p-3 flex gap-3 cursor-pointer select-none active:bg-gray-100 ${isOpen ? 'border-b' : ''}`}
                     >
                       {work.image ? (
-                        <img src={work.image} alt={work.title} className="w-12 h-16 object-cover rounded flex-shrink-0" />
+                        <img 
+                          src={work.image} 
+                          alt={work.title} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewImageUrl(work.image);
+                          }}
+                          className="w-12 h-16 object-cover rounded flex-shrink-0 hover:opacity-80 transition-opacity cursor-zoom-in" 
+                        />
                       ) : (
                         <div className="w-12 h-16 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
                           <IconBook />
@@ -457,7 +467,6 @@
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <span className="text-[10px] text-gray-400 mr-1">{work.scenes?.length || 0}件</span>
-                            {/* 明確なペンマークアイコンに変更 */}
                             <button onClick={(e) => startEditWork(work, e)} title="作品情報を編集" className="p-1 hover:bg-gray-200 rounded">
                               <IconPencil />
                             </button>
@@ -537,7 +546,6 @@
                                   {scene.chapter} {scene.page && `(${scene.page})`}
                                 </span>
                                 <div className="flex items-center gap-1">
-                                  {/* シーン編集ボタン（ペンマーク） */}
                                   <button onClick={(e) => startEditScene(scene, e)} className="p-0.5 hover:bg-gray-100 rounded" title="シーンを編集">
                                     <IconPencilSmall />
                                   </button>
@@ -607,6 +615,29 @@
               );
             })}
           </div>
+
+          {/* 画像拡大モーダル */}
+          {previewImageUrl && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50 cursor-pointer"
+              onClick={() => setPreviewImageUrl(null)}
+            >
+              <div className="relative max-w-full max-h-full">
+                <img 
+                  src={previewImageUrl} 
+                  alt="拡大画像" 
+                  className="max-w-full max-h-[90vh] object-contain rounded shadow-lg"
+                />
+                <button 
+                  onClick={() => setPreviewImageUrl(null)}
+                  className="absolute -top-10 right-0 text-white bg-black bg-opacity-50 hover:bg-opacity-80 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
       );
     }
