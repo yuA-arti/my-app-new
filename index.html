@@ -68,6 +68,10 @@
       const [selectedSite, setSelectedSite] = useState('');
 
       const [expandedMap, setExpandedMap] = useState({});
+      
+      // タイトル・メモの全文表示トグル用状態
+      const [expandedTitles, setExpandedTitles] = useState({});
+      const [expandedMemos, setExpandedMemos] = useState({});
 
       // 新規登録用フォーム状態
       const [newTitle, setNewTitle] = useState('');
@@ -229,6 +233,18 @@
       const toggleExpand = (id) => {
         if (editingWorkId === id) return;
         setExpandedMap(prev => ({ ...prev, [id]: !prev[id] }));
+      };
+
+      // タイトルの見切れ解除トグル
+      const toggleTitleExpand = (id, e) => {
+        e.stopPropagation();
+        setExpandedTitles(prev => ({ ...prev, [id]: !prev[id] }));
+      };
+
+      // メモの見切れ解除トグル
+      const toggleMemoExpand = (id, e) => {
+        e.stopPropagation();
+        setExpandedMemos(prev => ({ ...prev, [id]: !prev[id] }));
       };
 
       // シーン追加
@@ -476,6 +492,8 @@
             {filteredWorks.map(work => {
               const isOpen = isSearching ? true : !!expandedMap[work.id];
               const isEditing = editingWorkId === work.id;
+              const isTitleExpanded = !!expandedTitles[work.id];
+              const isMemoExpanded = !!expandedMemos[work.id];
 
               return (
                 <div key={work.id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -539,11 +557,21 @@
 
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-1">
-                          <div className="truncate">
-                            <h2 className="font-bold text-sm text-blue-600 truncate">{work.title}</h2>
-                            {work.author && <span className="text-[11px] text-gray-500 mr-2">{work.author}</span>}
-                            {work.site && <span className="text-[10px] bg-blue-50 text-blue-600 px-1 py-0.5 rounded">{work.site}</span>}
+                          <div className="min-w-0 flex-1">
+                            {/* タップでタイトル全文展開 */}
+                            <h2 
+                              onClick={(e) => toggleTitleExpand(work.id, e)}
+                              className={`font-bold text-sm text-blue-600 active:opacity-75 ${isTitleExpanded ? 'whitespace-normal break-words' : 'truncate'}`}
+                              title="タップで全文表示/省略"
+                            >
+                              {work.title}
+                            </h2>
+                            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                              {work.author && <span className="text-[11px] text-gray-500">{work.author}</span>}
+                              {work.site && <span className="text-[10px] bg-blue-50 text-blue-600 px-1 py-0.5 rounded">{work.site}</span>}
+                            </div>
                           </div>
+                          
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <span className="text-[10px] text-gray-400 mr-1">{work.scenes?.length || 0}件</span>
                             <button onClick={(e) => startEditWork(work, e)} title="作品情報を編集" className="p-1 hover:bg-gray-200 rounded">
@@ -556,7 +584,16 @@
                           </div>
                         </div>
 
-                        {work.memo && <p className="text-xs text-gray-600 mt-1 line-clamp-2">{work.memo}</p>}
+                        {/* タップでメモ全文展開 */}
+                        {work.memo && (
+                          <p 
+                            onClick={(e) => toggleMemoExpand(work.id, e)}
+                            className={`text-xs text-gray-600 mt-1 active:opacity-75 ${isMemoExpanded ? 'whitespace-normal break-words' : 'line-clamp-2'}`}
+                            title="タップで全文表示/省略"
+                          >
+                            {work.memo}
+                          </p>
+                        )}
 
                         {work.tags && work.tags.length > 0 && (
                           <div className="flex gap-1 flex-wrap mt-1.5">
