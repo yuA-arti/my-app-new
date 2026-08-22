@@ -153,7 +153,7 @@
         if (file) {
           try {
             const compressed = await compressImage(file);
-            setEditWorkData({ ...editWorkData, image: compressed });
+            setEditWorkData(prev => ({ ...prev, image: compressed }));
           } catch (err) {
             alert('画像の読み込み・圧縮に失敗しました');
           }
@@ -177,7 +177,7 @@
         if (file) {
           try {
             const compressed = await compressImage(file);
-            setEditSceneData({ ...editSceneData, image: compressed });
+            setEditSceneData(prev => ({ ...prev, image: compressed }));
           } catch (err) {
             alert('画像の読み込み・圧縮に失敗しました');
           }
@@ -263,7 +263,7 @@
       const addScene = (workId, e) => {
         if (e) e.preventDefault();
         const input = sceneInputs[workId] || {};
-        if (!input.memo?.trim() && !input.image) return;
+        if (!input.memo?.trim() && !input.image && !input.chapter) return;
 
         const newScene = {
           id: Date.now(),
@@ -299,13 +299,12 @@
       const saveEditScene = (workId, sceneId, e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!editSceneData.memo.trim() && !editSceneData.image) return;
 
         setWorks(works.map(w => {
           if (w.id === workId) {
             return {
               ...w,
-              scenes: w.scenes.map(s => {
+              scenes: (w.scenes || []).map(s => {
                 if (s.id === sceneId) {
                   return {
                     ...s,
@@ -325,20 +324,23 @@
         setEditingSceneId(null);
       };
 
-      const deleteScene = (workId, sceneId) => {
-        setWorks(works.map(w => {
-          if (w.id === workId) {
-            return { ...w, scenes: w.scenes.filter(s => s.id !== sceneId) };
-          }
-          return w;
-        }));
+      const deleteScene = (workId, sceneId, e) => {
+        if (e) e.stopPropagation();
+        if (window.confirm('このBookmarkを削除しますか？')) {
+          setWorks(works.map(w => {
+            if (w.id === workId) {
+              return { ...w, scenes: (w.scenes || []).filter(s => s.id !== sceneId) };
+            }
+            return w;
+          }));
+        }
       };
 
       const handleSceneInputChange = (workId, field, value) => {
-        setSceneInputs({
-          ...sceneInputs,
-          [workId]: { ...(sceneInputs[workId] || {}), [field]: value }
-        });
+        setSceneInputs(prev => ({
+          ...prev,
+          [workId]: { ...(prev[workId] || {}), [field]: value }
+        }));
       };
 
       const exportBackup = async () => {
@@ -452,7 +454,7 @@
           {/* 検索・フィルター */}
           <div className="bg-white p-3 rounded-lg shadow-sm mb-3 border">
             <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex items-center gap-2 border rounded px-2 py-1.5 bg-white">
+              <div className="flex items-center gap-2 border rounded px-2 py-1.5 bg-white flex-1">
                 <IconSearch />
                 <input
                   type="text"
@@ -585,8 +587,7 @@
                           <div className="min-w-0 flex-1">
                             <h2 
                               onClick={(e) => toggleTitleExpand(work.id, e)}
-                              className={`font-bold text-sm text-blue-600 active:opacity-75 ${isTitleExpanded ? 'whitespace-normal break-words' : 'truncate'}`}
-                              title="タップで全文表示/省略"
+                              className={`font-bold text-sm text-blue-600 hover:underline cursor-pointer ${isTitleExpanded ? 'whitespace-normal break-words' : 'truncate'}`}
                             >
                               {work.title}
                             </h2>
@@ -611,8 +612,7 @@
                         {work.memo && (
                           <p 
                             onClick={(e) => toggleMemoExpand(work.id, e)}
-                            className={`text-xs text-gray-600 mt-1 active:opacity-75 ${isMemoExpanded ? 'whitespace-normal break-words' : 'line-clamp-2'}`}
-                            title="タップで全文表示/省略"
+                            className={`text-xs text-gray-600 mt-1 cursor-pointer ${isMemoExpanded ? 'whitespace-normal break-words' : 'line-clamp-2'}`}
                           >
                             {work.memo}
                           </p>
@@ -715,7 +715,7 @@
                                     <button onClick={(e) => startEditScene(scene, e)} className="p-0.5 hover:bg-gray-100 rounded">
                                       <IconPencilSmall />
                                     </button>
-                                    <button onClick={() => deleteScene(work.id, scene.id)} className="p-0.5 hover:bg-gray-100 rounded">
+                                    <button onClick={(e) => deleteScene(work.id, scene.id, e)} className="p-0.5 hover:bg-gray-100 rounded">
                                       <IconTrashSmall />
                                     </button>
                                   </div>
