@@ -5,294 +5,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Favorite Scenes（名シーン記録帳）</title>
   <style>
-    /* 全体設定 */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    }
-    body {
-      background-color: #f4f5f7;
-      color: #333;
-      padding: 16px;
-      max-width: 600px;
-      margin: 0 auto;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    body { background-color: #f4f5f7; color: #333; padding: 16px; max-width: 600px; margin: 0 auto; }
 
-    /* 修正案1: ヘッダー（Flexbox折り返し対応） */
-    .header-container {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px 12px;
-      margin-bottom: 16px;
-    }
-    .title-group {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-    }
-    .title-group h1 {
-      font-size: 1.3rem;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .sub-title {
-      font-size: 0.8rem;
-      color: #666;
-    }
-    .button-group {
-      display: flex;
-      gap: 6px;
-      margin-left: auto; /* 右寄せ維持 */
-    }
-    .btn {
-      background: #e2e8f0;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      color: #4a5568;
-      cursor: pointer;
-    }
-    .btn-icon {
-      padding: 6px 8px;
-    }
-
-    /* 検索・コントロール領域 */
-    .controls-container {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      background: #fff;
-      padding: 12px;
-      border-radius: 10px;
-      margin-bottom: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .search-input, .select-box {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      outline: none;
-      background-color: #fff;
-    }
-    .select-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    /* 新規登録ボタン */
-    .add-btn-container {
-      background: #fff;
-      padding: 10px 12px;
-      border-radius: 8px;
-      margin-bottom: 16px;
-      color: #2563eb;
-      font-weight: bold;
-      font-size: 0.9rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    /* 作品カード一覧 */
-    .card-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 12px;
-      display: flex;
-      gap: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      position: relative;
-    }
-    .card-img {
-      width: 60px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 6px;
-      background: #edf2f7;
-      flex-shrink: 0;
-    }
-    .card-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-    .card-title {
-      font-size: 0.9rem;
-      font-weight: bold;
-      color: #2563eb;
-      line-height: 1.3;
-    }
-    .card-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #a0aec0;
-      font-size: 0.8rem;
-    }
-    .action-icon {
-      cursor: pointer;
-    }
-    .action-icon.edit { color: #3182ce; }
-    .action-icon.delete { color: #e53e3e; }
+    /* 修正案1: 2段折り返し対応ヘッダー */
+    .header-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-bottom: 16px; }
+    .title-group { display: flex; align-items: baseline; gap: 6px; }
+    .title-group h1 { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+    .sub-title { font-size: 0.8rem; color: #666; }
+    .button-group { display: flex; gap: 6px; margin-left: auto; }
     
-    .author {
-      font-size: 0.75rem;
-      color: #718096;
-    }
-    .site-badge {
-      display: inline-block;
-      background: #ebf8ff;
-      color: #3182ce;
-      font-size: 0.65rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: bold;
-      margin-left: 4px;
-    }
+    .btn { background: #e2e8f0; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; color: #4a5568; cursor: pointer; }
+    .btn:hover { background: #cbd5e0; }
+    .btn-primary { background: #3182ce; color: #fff; }
+    .btn-primary:hover { background: #2b6cb0; }
+
+    /* 検索・ソートエリア */
+    .controls-container { display: flex; flex-direction: column; gap: 8px; background: #fff; padding: 12px; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .search-input, .select-box { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; outline: none; background: #fff; }
+    .select-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .add-btn { background: #fff; padding: 10px 12px; border-radius: 8px; margin-bottom: 16px; color: #2563eb; font-weight: bold; font-size: 0.85rem; cursor: pointer; border: none; text-align: left; width: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+    /* 作品カード */
+    .card-list { display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border-radius: 10px; padding: 12px; display: flex; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-img { width: 65px; height: 85px; object-fit: cover; border-radius: 6px; background: #edf2f7; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #a0aec0; }
+    .card-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .card-title { font-size: 0.9rem; font-weight: bold; color: #2563eb; }
+    .card-actions { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #a0aec0; }
+    .action-icon { cursor: pointer; }
     
-    /* 星評価スタイル */
-    .rating-container {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin: 2px 0;
-    }
-    .stars {
-      color: #f6e05e; /* 金色 */
-      font-size: 0.85rem;
-      letter-spacing: 1px;
-    }
-    .rating-text {
-      font-size: 0.75rem;
-      color: #718096;
-      font-weight: bold;
-    }
+    .author { font-size: 0.75rem; color: #718096; }
+    .site-badge { background: #ebf8ff; color: #3182ce; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 4px; }
+    
+    /* 星評価 */
+    .rating-container { display: flex; align-items: center; gap: 4px; margin: 2px 0; }
+    .stars { color: #f6e05e; font-size: 0.85rem; letter-spacing: 1px; }
+    .rating-text { font-size: 0.75rem; color: #718096; font-weight: bold; }
 
-    .description {
-      font-size: 0.75rem;
-      color: #4a5568;
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 4px;
-    }
-    .tag {
-      background: #edf2f7;
-      color: #718096;
-      font-size: 0.65rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
+    .description { font-size: 0.75rem; color: #4a5568; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .tag { background: #edf2f7; color: #718096; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; }
 
-    /* 設定モーダル */
-    .modal {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
+    /* モーダル */
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal.hidden { display: none; }
-    .modal-content {
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      width: 85%;
-      max-width: 360px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .modal-header {
-      font-size: 1.1rem;
-      font-weight: bold;
-      margin-bottom: 16px;
-    }
-    .setting-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
-    .setting-label {
-      font-size: 0.85rem;
-      color: #4a5568;
-      font-weight: bold;
-    }
-    .close-btn {
-      width: 100%;
-      padding: 8px;
-      background: #3182ce;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+    .modal-content { background: #fff; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; max-height: 90vh; overflow-y: auto; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 0.8rem; font-weight: bold; color: #4a5568; }
+    .form-group input, .form-group textarea, .form-group select { padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }
   </style>
 </head>
 <body>
 
-  <!-- 1. ヘッダー (修正案1適用) -->
+  <!-- 1. ヘッダー (修正案1) -->
   <header class="header-container">
     <div class="title-group">
       <h1>📖 Favorite Scenes</h1>
       <span class="sub-title">（名シーン記録帳）</span>
     </div>
     <div class="button-group">
-      <button class="btn">保存(書き出し)</button>
-      <button class="btn">復元(読み込み)</button>
-      <button id="settings-btn" class="btn btn-icon" title="設定">⚙️</button>
+      <button class="btn" id="export-btn">保存(書き出し)</button>
+      <button class="btn" id="import-btn">復元(読み込み)</button>
+      <button class="btn" id="settings-btn" title="設定">⚙️</button>
+      <input type="file" id="file-input" style="display: none;" accept=".json">
     </div>
   </header>
 
   <!-- 2. 検索・ソートコントロール -->
   <div class="controls-container">
-    <input type="text" placeholder="🔍 フリーワード検索..." class="search-input">
+    <input type="text" id="search-input" placeholder="🔍 フリーワード検索..." class="search-input">
     
     <div class="select-grid">
-      <select class="select-box">
-        <option>すべての掲載サイト</option>
-        <option>ピッコマ</option>
-        <option>サンデーうぇぶり</option>
+      <select id="site-filter" class="select-box">
+        <option value="">すべての掲載サイト</option>
       </select>
-      <select class="select-box">
-        <option>すべてのタグ</option>
+      <select id="tag-filter" class="select-box">
+        <option value="">すべてのタグ</option>
       </select>
     </div>
 
-    <!-- 並び替えプルダウン -->
     <select id="sort-select" class="select-box">
       <option value="rating-desc">★が多い順</option>
       <option value="rating-asc">★が少ない順</option>
@@ -301,101 +95,17 @@
     </select>
   </div>
 
-  <!-- 新規登録ボタン -->
-  <div class="add-btn-container">
-    <span>▶ ＋ 新しい作品を登録する</span>
-  </div>
+  <button class="add-btn" id="add-card-btn">▶ ＋ 新しい作品を登録する</button>
 
-  <!-- 3. 作品一覧（データ属性に評価・日付を保持） -->
-  <div class="card-list" id="card-list">
-    
-    <!-- カード1 -->
-    <div class="card" data-rating="5" data-created-at="2026-08-01T10:00:00">
-      <img src="https://via.placeholder.com/60x80" class="card-img" alt="書影">
-      <div class="card-content">
-        <div class="card-header">
-          <div class="card-title">悪役に転生したらイケメンと無...</div>
-          <div class="card-actions">
-            <span>0件</span>
-            <span class="action-icon edit">✏️</span>
-            <span class="action-icon delete">🗑️</span>
-            <span>∨</span>
-          </div>
-        </div>
-        <div class="author">Mongdang, nonon, Kim Zia <span class="site-badge">ピッコマ</span></div>
-        <div class="rating-container">
-          <span class="stars">★★★★★</span>
-          <span class="rating-text">(5.0)</span>
-        </div>
-        <div class="description">事故で死んだら小説の嫌われ悪役に転生！しかも殺されるかもしれないイケメンたちと無人島でサバイバルする羽目に...</div>
-        <div class="tags">
-          <span class="tag">#絵が綺麗</span>
-          <span class="tag">#主人公が魅力的</span>
-          <span class="tag">#サバイバル</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- カード2 -->
-    <div class="card" data-rating="3" data-created-at="2026-08-05T10:00:00">
-      <img src="https://via.placeholder.com/60x80" class="card-img" alt="書影">
-      <div class="card-content">
-        <div class="card-header">
-          <div class="card-title">三度追放された冒険者、激レア...</div>
-          <div class="card-actions">
-            <span>0件</span>
-            <span class="action-icon edit">✏️</span>
-            <span class="action-icon delete">🗑️</span>
-            <span>∨</span>
-          </div>
-        </div>
-        <div class="author">青木千尋 南野雪花 <span class="site-badge">ピッコマ</span></div>
-        <div class="rating-container">
-          <span class="stars">★★★☆☆</span>
-          <span class="rating-text">(3.0)</span>
-        </div>
-        <div class="description">クランを追放された軍師ライオネルが、困窮する美少女3人組の冒険者と出会う。世話を焼くうちに彼女たちになつか...</div>
-        <div class="tags">
-          <span class="tag">#かっこいい</span>
-          <span class="tag">#賢い</span>
-          <span class="tag">#仲間</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- カード3 -->
-    <div class="card" data-rating="4" data-created-at="2026-08-10T10:00:00">
-      <img src="https://via.placeholder.com/60x80" class="card-img" alt="書影">
-      <div class="card-content">
-        <div class="card-header">
-          <div class="card-title">回帰した鉄血の猟犬</div>
-          <div class="card-actions">
-            <span>1件</span>
-            <span class="action-icon edit">✏️</span>
-            <span class="action-icon delete">🗑️</span>
-            <span>∨</span>
-          </div>
-        </div>
-        <div class="author"><span class="site-badge">ピッコマ</span></div>
-        <div class="rating-container">
-          <span class="stars">★★★★☆</span>
-          <span class="rating-text">(4.0)</span>
-        </div>
-        <div class="tags">
-          <span class="tag">#かっこいい</span>
-        </div>
-      </div>
-    </div>
-
-  </div>
+  <!-- 3. 作品一覧 -->
+  <div class="card-list" id="card-list"></div>
 
   <!-- 4. 設定モーダル -->
   <div id="settings-modal" class="modal hidden">
     <div class="modal-content">
-      <div class="modal-header">⚙️ 設定</div>
-      
-      <div class="setting-group">
-        <label class="setting-label" for="default-sort">デフォルトの並び順</label>
+      <h3>⚙️ 設定</h3>
+      <div class="form-group">
+        <label for="default-sort">デフォルトの並び順</label>
         <select id="default-sort" class="select-box">
           <option value="rating-desc">★が多い順</option>
           <option value="rating-asc">★が少ない順</option>
@@ -403,70 +113,358 @@
           <option value="date-asc">登録が古い順</option>
         </select>
       </div>
-
-      <!-- ※今後ここに新しい設定項目を追加可能 -->
-
-      <button id="close-settings" class="close-btn">保存して閉じる</button>
+      <button id="close-settings" class="btn btn-primary">保存して閉じる</button>
     </div>
   </div>
 
-  <!-- 5. JavaScript (並び替え・LocalStorage同期ロジック) -->
+  <!-- 5. 登録・編集モーダル -->
+  <div id="item-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="modal-title">作品の登録</h3>
+      <input type="hidden" id="edit-id">
+      <div class="form-group">
+        <label>タイトル</label>
+        <input type="text" id="form-title" required>
+      </div>
+      <div class="form-group">
+        <label>作者</label>
+        <input type="text" id="form-author">
+      </div>
+      <div class="form-group">
+        <label>掲載サイト</label>
+        <input type="text" id="form-site" placeholder="例: ピッコマ">
+      </div>
+      <div class="form-group">
+        <label>評価（★1〜5）</label>
+        <select id="form-rating" class="select-box">
+          <option value="5">★★★★★ (5.0)</option>
+          <option value="4">★★★★☆ (4.0)</option>
+          <option value="3">★★★☆☆ (3.0)</option>
+          <option value="2">★★☆☆☆ (2.0)</option>
+          <option value="1">★☆☆☆☆ (1.0)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>画像URL (空欄可)</label>
+        <input type="text" id="form-img" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>あらすじ・メモ</label>
+        <textarea id="form-desc" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label>タグ (カンマ区切り)</label>
+        <input type="text" id="form-tags" placeholder="かっこいい, サバイバル">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button id="save-item-btn" class="btn btn-primary" style="flex:1;">保存</button>
+        <button id="cancel-item-btn" class="btn" style="flex:1;">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const sortSelect = document.getElementById('sort-select');
-      const defaultSortSelect = document.getElementById('default-sort');
-      const settingsBtn = document.getElementById('settings-btn');
-      const settingsModal = document.getElementById('settings-modal');
-      const closeSettingsBtn = document.getElementById('close-settings');
-      const cardList = document.getElementById('card-list');
-
-      // 1. 保存されたデフォルト並び順の読み込み（なければ★が多い順）
-      const savedDefaultSort = localStorage.getItem('app_default_sort') || 'rating-desc';
-      sortSelect.value = savedDefaultSort;
-      defaultSortSelect.value = savedDefaultSort;
-
-      // 2. ソート処理関数
-      function sortCards(sortValue) {
-        const cards = Array.from(cardList.children);
-        cards.sort((a, b) => {
-          const ratingA = parseFloat(a.dataset.rating) || 0;
-          const ratingB = parseFloat(b.dataset.rating) || 0;
-          const dateA = new Date(a.dataset.createdAt).getTime() || 0;
-          const dateB = new Date(b.dataset.createdAt).getTime() || 0;
-
-          switch (sortValue) {
-            case 'rating-desc': return ratingB - ratingA;
-            case 'rating-asc':  return ratingA - ratingB;
-            case 'date-desc':   return dateB - dateA;
-            case 'date-asc':    return dateA - dateB;
-            default: return 0;
-          }
-        });
-
-        // 並び替えたカードをDOMに再描画
-        cards.forEach(card => cardList.appendChild(card));
+    // 初期サンプルデータ（画像内データの再現）
+    const initialData = [
+      {
+        id: "1",
+        title: "悪役に転生したらイケメンと無...",
+        author: "Mongdang, nonon, Kim Zia",
+        site: "ピッコマ",
+        rating: 5,
+        img: "",
+        desc: "事故で死んだら小説の嫌われ悪役に転生！しかも殺されるかもしれないイケメンたちと無人島でサバイバルする羽目に...",
+        tags: ["絵が綺麗", "主人公が魅力的", "サバイバル"],
+        scenesCount: 0,
+        createdAt: "2026-08-01T10:00:00.000Z"
+      },
+      {
+        id: "2",
+        title: "三度追放された冒険者、激レア...",
+        author: "青木千尋 南野雪花",
+        site: "ピッコマ",
+        rating: 3,
+        img: "",
+        desc: "クランを追放された軍師ライオネルが、困窮する美少女3人組の冒険者と出会う。世話を焼くうちに彼女たちになつか...",
+        tags: ["かっこいい", "賢い", "仲間"],
+        scenesCount: 0,
+        createdAt: "2026-08-02T10:00:00.000Z"
+      },
+      {
+        id: "3",
+        title: "回帰した鉄血の猟犬",
+        author: "",
+        site: "ピッコマ",
+        rating: 4,
+        img: "",
+        desc: "",
+        tags: ["かっこいい"],
+        scenesCount: 1,
+        createdAt: "2026-08-03T10:00:00.000Z"
+      },
+      {
+        id: "4",
+        title: "リターンサバイバル",
+        author: "",
+        site: "ピッコマ",
+        rating: 4,
+        img: "",
+        desc: "",
+        tags: ["サバイバル", "ゾンビ", "かっこいい", "アクション"],
+        scenesCount: 1,
+        createdAt: "2026-08-04T10:00:00.000Z"
+      },
+      {
+        id: "5",
+        title: "葬送のフリーレン",
+        author: "山田鐘人 / アベツカサ",
+        site: "サンデーうぇぶり",
+        rating: 5,
+        img: "",
+        desc: "旅の過程での人間模様が美しい",
+        tags: ["ファンタジー", "ドラマ"],
+        scenesCount: 1,
+        createdAt: "2026-08-05T10:00:00.000Z"
       }
+    ];
 
-      // 3. プルダウン切り替えでリアルタイムソート
-      sortSelect.addEventListener('change', (e) => sortCards(e.target.value));
+    let items = [];
 
-      // 4. 設定モーダルの開閉
-      settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-      closeSettingsBtn.addEventListener('click', () => {
-        const newDefault = defaultSortSelect.value;
-        // LocalStorageへ永続化
-        localStorage.setItem('app_default_sort', newDefault);
-        
-        // 現在の並び順も更新してソート適用
-        sortSelect.value = newDefault;
-        sortCards(newDefault);
-        
-        settingsModal.classList.add('hidden');
+    // ローカルストレージ初期化
+    function loadStorage() {
+      const stored = localStorage.getItem('app_items_data');
+      if (stored) {
+        items = JSON.parse(stored);
+      } else {
+        items = initialData;
+        saveStorage();
+      }
+    }
+
+    function saveStorage() {
+      localStorage.setItem('app_items_data', JSON.stringify(items));
+    }
+
+    // 星描画ヘルパー
+    function getStarsHtml(rating) {
+      const r = Math.round(rating || 0);
+      const stars = '★'.repeat(r) + '☆'.repeat(5 - r);
+      return `<span class="stars">${stars}</span> <span class="rating-text">(${Number(rating).toFixed(1)})</span>`;
+    }
+
+    // 一覧描画
+    function renderList() {
+      const cardList = document.getElementById('card-list');
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const siteFilter = document.getElementById('site-filter').value;
+      const tagFilter = document.getElementById('tag-filter').value;
+      const sortValue = document.getElementById('sort-select').value;
+
+      // フィルター処理
+      let filtered = items.filter(item => {
+        const matchesSearch = item.title.toLowerCase().includes(search) || (item.desc && item.desc.toLowerCase().includes(search));
+        const matchesSite = !siteFilter || item.site === siteFilter;
+        const matchesTag = !tagFilter || (item.tags && item.tags.includes(tagFilter));
+        return matchesSearch && matchesSite && matchesTag;
       });
 
-      // 初回ロード時のソート実行
-      sortCards(savedDefaultSort);
+      // ソート処理
+      filtered.sort((a, b) => {
+        const rA = a.rating || 0, rB = b.rating || 0;
+        const dA = new Date(a.createdAt || 0).getTime(), dB = new Date(b.createdAt || 0).getTime();
+        if (sortValue === 'rating-desc') return rB - rA;
+        if (sortValue === 'rating-asc') return rA - rB;
+        if (sortValue === 'date-desc') return dB - dA;
+        if (sortValue === 'date-asc') return dA - dB;
+        return 0;
+      });
+
+      cardList.innerHTML = '';
+      filtered.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          ${item.img ? `<img src="${item.img}" class="card-img" alt="書影">` : `<div class="card-img">書影</div>`}
+          <div class="card-content">
+            <div class="card-header">
+              <div class="card-title">${item.title}</div>
+              <div class="card-actions">
+                <span>${item.scenesCount || 0}件</span>
+                <span class="action-icon" onclick="editItem('${item.id}')">✏️</span>
+                <span class="action-icon" onclick="deleteItem('${item.id}')">🗑️</span>
+              </div>
+            </div>
+            <div class="author">
+              ${item.author || ''} 
+              ${item.site ? `<span class="site-badge">${item.site}</span>` : ''}
+            </div>
+            <div class="rating-container">${getStarsHtml(item.rating)}</div>
+            ${item.desc ? `<div class="description">${item.desc}</div>` : ''}
+            <div class="tags">
+              ${(item.tags || []).map(t => `<span class="tag">#${t}</span>`).join('')}
+            </div>
+          </div>
+        `;
+        cardList.appendChild(card);
+      });
+
+      updateFilters();
+    }
+
+    // フィルター選択肢の更新
+    function updateFilters() {
+      const siteSelect = document.getElementById('site-filter');
+      const tagSelect = document.getElementById('tag-filter');
+      
+      const currentSite = siteSelect.value;
+      const currentTag = tagSelect.value;
+
+      const sites = [...new Set(items.map(i => i.site).filter(Boolean))];
+      const tags = [...new Set(items.flatMap(i => i.tags || []).filter(Boolean))];
+
+      siteSelect.innerHTML = '<option value="">すべての掲載サイト</option>' + sites.map(s => `<option value="${s}" ${s === currentSite ? 'selected':''}>${s}</option>`).join('');
+      tagSelect.innerHTML = '<option value="">すべてのタグ</option>' + tags.map(t => `<option value="${t}" ${t === currentTag ? 'selected':''}>${t}</option>`).join('');
+    }
+
+    // 保存 (書き出し)
+    document.getElementById('export-btn').addEventListener('click', () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "favorite_scenes_backup.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
     });
+
+    // 復元 (読み込み)
+    document.getElementById('import-btn').addEventListener('click', () => {
+      document.getElementById('file-input').click();
+    });
+
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          items = JSON.parse(event.target.result);
+          saveStorage();
+          renderList();
+          alert('データを復元しました。');
+        } catch (err) {
+          alert('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // 編集・削除
+    window.editItem = function(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      document.getElementById('modal-title').innerText = '作品の編集';
+      document.getElementById('edit-id').value = item.id;
+      document.getElementById('form-title').value = item.title;
+      document.getElementById('form-author').value = item.author || '';
+      document.getElementById('form-site').value = item.site || '';
+      document.getElementById('form-rating').value = item.rating || 5;
+      document.getElementById('form-img').value = item.img || '';
+      document.getElementById('form-desc').value = item.desc || '';
+      document.getElementById('form-tags').value = (item.tags || []).join(', ');
+      document.getElementById('item-modal').classList.remove('hidden');
+    };
+
+    window.deleteItem = function(id) {
+      if (confirm('本当に削除しますか？')) {
+        items = items.filter(i => i.id !== id);
+        saveStorage();
+        renderList();
+      }
+    };
+
+    // モーダル操作（新規追加・設定）
+    document.getElementById('add-card-btn').addEventListener('click', () => {
+      document.getElementById('modal-title').innerText = '作品の新規登録';
+      document.getElementById('edit-id').value = '';
+      document.getElementById('form-title').value = '';
+      document.getElementById('form-author').value = '';
+      document.getElementById('form-site').value = '';
+      document.getElementById('form-rating').value = '5';
+      document.getElementById('form-img').value = '';
+      document.getElementById('form-desc').value = '';
+      document.getElementById('form-tags').value = '';
+      document.getElementById('item-modal').classList.remove('hidden');
+    });
+
+    document.getElementById('cancel-item-btn').addEventListener('click', () => {
+      document.getElementById('item-modal').classList.add('hidden');
+    });
+
+    document.getElementById('save-item-btn').addEventListener('click', () => {
+      const id = document.getElementById('edit-id').value;
+      const title = document.getElementById('form-title').value;
+      if (!title) return alert('タイトルを入力してください');
+
+      const tags = document.getElementById('form-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+      if (id) {
+        const item = items.find(i => i.id === id);
+        item.title = title;
+        item.author = document.getElementById('form-author').value;
+        item.site = document.getElementById('form-site').value;
+        item.rating = parseFloat(document.getElementById('form-rating').value);
+        item.img = document.getElementById('form-img').value;
+        item.desc = document.getElementById('form-desc').value;
+        item.tags = tags;
+      } else {
+        items.push({
+          id: Date.now().toString(),
+          title,
+          author: document.getElementById('form-author').value,
+          site: document.getElementById('form-site').value,
+          rating: parseFloat(document.getElementById('form-rating').value),
+          img: document.getElementById('form-img').value,
+          desc: document.getElementById('form-desc').value,
+          tags,
+          scenesCount: 0,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      saveStorage();
+      renderList();
+      document.getElementById('item-modal').classList.add('hidden');
+    });
+
+    // イベントリスナー
+    document.getElementById('search-input').addEventListener('input', renderList);
+    document.getElementById('site-filter').addEventListener('change', renderList);
+    document.getElementById('tag-filter').addEventListener('change', renderList);
+    document.getElementById('sort-select').addEventListener('change', renderList);
+
+    // 設定関連
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeSettingsBtn = document.getElementById('close-settings');
+    const sortSelect = document.getElementById('sort-select');
+    const defaultSortSelect = document.getElementById('default-sort');
+
+    settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+    closeSettingsBtn.addEventListener('click', () => {
+      const def = defaultSortSelect.value;
+      localStorage.setItem('app_default_sort', def);
+      sortSelect.value = def;
+      renderList();
+      settingsModal.classList.add('hidden');
+    });
+
+    // 初期化
+    loadStorage();
+    const savedDefault = localStorage.getItem('app_default_sort') || 'rating-desc';
+    sortSelect.value = savedDefault;
+    defaultSortSelect.value = savedDefault;
+    renderList();
   </script>
 </body>
 </html>
