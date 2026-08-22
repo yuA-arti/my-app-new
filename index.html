@@ -8,7 +8,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     body { background-color: #f4f5f7; color: #333; padding: 16px; max-width: 600px; margin: 0 auto; }
 
-    /* 修正案1: 2段折り返し対応ヘッダー */
+    /* 2段折り返し対応ヘッダー */
     .header-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-bottom: 16px; }
     .title-group { display: flex; align-items: baseline; gap: 6px; }
     .title-group h1 { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
@@ -30,13 +30,19 @@
     /* 作品カード */
     .card-list { display: flex; flex-direction: column; gap: 12px; }
     .card { background: #fff; border-radius: 10px; padding: 12px; display: flex; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .card-img { width: 65px; height: 85px; object-fit: cover; border-radius: 6px; background: #edf2f7; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #a0aec0; }
-    .card-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-    .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .card-title { font-size: 0.9rem; font-weight: bold; color: #2563eb; }
-    .card-actions { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #a0aec0; }
-    .action-icon { cursor: pointer; }
+    .card-img-wrapper { width: 65px; height: 85px; flex-shrink: 0; }
+    .card-img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; background: #edf2f7; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #a0aec0; }
+    .card-content { flex: 1; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     
+    /* タイトルの伸縮設定 */
+    .card-title { font-size: 0.9rem; font-weight: bold; color: #2563eb; cursor: pointer; user-select: none; word-break: break-all; }
+    .card-title.truncated { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    
+    .card-actions { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #a0aec0; flex-shrink: 0; }
+    .action-icon { cursor: pointer; }
+    .action-icon.bookmarked { color: #e53e3e; }
+
     .author { font-size: 0.75rem; color: #718096; }
     .site-badge { background: #ebf8ff; color: #3182ce; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 4px; }
     
@@ -45,7 +51,10 @@
     .stars { color: #f6e05e; font-size: 0.85rem; letter-spacing: 1px; }
     .rating-text { font-size: 0.75rem; color: #718096; font-weight: bold; }
 
-    .description { font-size: 0.75rem; color: #4a5568; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    /* あらすじの伸縮設定 */
+    .description { font-size: 0.75rem; color: #4a5568; line-height: 1.4; cursor: pointer; user-select: none; word-break: break-all; }
+    .description.truncated { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
     .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
     .tag { background: #edf2f7; color: #718096; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; }
 
@@ -60,7 +69,7 @@
 </head>
 <body>
 
-  <!-- 1. ヘッダー (修正案1) -->
+  <!-- ヘッダー -->
   <header class="header-container">
     <div class="title-group">
       <h1>📖 Favorite Scenes</h1>
@@ -74,7 +83,7 @@
     </div>
   </header>
 
-  <!-- 2. 検索・ソートコントロール -->
+  <!-- 検索・ソートエリア -->
   <div class="controls-container">
     <input type="text" id="search-input" placeholder="🔍 フリーワード検索..." class="search-input">
     
@@ -87,20 +96,26 @@
       </select>
     </div>
 
-    <select id="sort-select" class="select-box">
-      <option value="rating-desc">★が多い順</option>
-      <option value="rating-asc">★が少ない順</option>
-      <option value="date-desc">登録が新しい順</option>
-      <option value="date-asc">登録が古い順</option>
-    </select>
+    <div class="select-grid">
+      <select id="sort-select" class="select-box">
+        <option value="rating-desc">★が多い順</option>
+        <option value="rating-asc">★が少ない順</option>
+        <option value="date-desc">登録が新しい順</option>
+        <option value="date-asc">登録が古い順</option>
+      </select>
+      <select id="bookmark-filter" class="select-box">
+        <option value="all">すべて表示</option>
+        <option value="bookmarked">🔖 ブックマークのみ</option>
+      </select>
+    </div>
   </div>
 
   <button class="add-btn" id="add-card-btn">▶ ＋ 新しい作品を登録する</button>
 
-  <!-- 3. 作品一覧 -->
+  <!-- 作品一覧 -->
   <div class="card-list" id="card-list"></div>
 
-  <!-- 4. 設定モーダル -->
+  <!-- 設定モーダル -->
   <div id="settings-modal" class="modal hidden">
     <div class="modal-content">
       <h3>⚙️ 設定</h3>
@@ -117,7 +132,7 @@
     </div>
   </div>
 
-  <!-- 5. 登録・編集モーダル -->
+  <!-- 登録・編集モーダル -->
   <div id="item-modal" class="modal hidden">
     <div class="modal-content">
       <h3 id="modal-title">作品の登録</h3>
@@ -145,8 +160,9 @@
         </select>
       </div>
       <div class="form-group">
-        <label>画像URL (空欄可)</label>
-        <input type="text" id="form-img" placeholder="https://...">
+        <label>画像ファイルを選択 (ファイルまたはURL)</label>
+        <input type="file" id="form-img-file" accept="image/*">
+        <input type="text" id="form-img-url" placeholder="または画像URL (https://...)" style="margin-top: 4px;">
       </div>
       <div class="form-group">
         <label>あらすじ・メモ</label>
@@ -164,73 +180,51 @@
   </div>
 
   <script>
-    // 初期サンプルデータ（画像内データの再現）
     const initialData = [
       {
         id: "1",
-        title: "悪役に転生したらイケメンと無...",
+        title: "悪役に転生したらイケメンと無人島でサバイバルする羽目になった",
         author: "Mongdang, nonon, Kim Zia",
         site: "ピッコマ",
         rating: 5,
         img: "",
-        desc: "事故で死んだら小説の嫌われ悪役に転生！しかも殺されるかもしれないイケメンたちと無人島でサバイバルする羽目に...",
+        desc: "事故で死んだら小説の嫌われ悪役に転生！しかも殺されるかもしれないイケメンたちと無人島でサバイバルする羽目になり、過酷な状況の中で生き残りをかけて協力することに...",
         tags: ["絵が綺麗", "主人公が魅力的", "サバイバル"],
         scenesCount: 0,
+        isBookmarked: true,
         createdAt: "2026-08-01T10:00:00.000Z"
       },
       {
         id: "2",
-        title: "三度追放された冒険者、激レア...",
-        author: "青木千尋 南野雪花",
-        site: "ピッコマ",
-        rating: 3,
-        img: "",
-        desc: "クランを追放された軍師ライオネルが、困窮する美少女3人組の冒険者と出会う。世話を焼くうちに彼女たちになつか...",
-        tags: ["かっこいい", "賢い", "仲間"],
-        scenesCount: 0,
-        createdAt: "2026-08-02T10:00:00.000Z"
-      },
-      {
-        id: "3",
         title: "回帰した鉄血の猟犬",
         author: "",
         site: "ピッコマ",
         rating: 4,
         img: "",
-        desc: "",
+        desc: "裏切られ処刑された猟犬が過去に回帰し、圧倒的な力と知略で運命を覆していく無双ファンタジー。",
         tags: ["かっこいい"],
         scenesCount: 1,
+        isBookmarked: false,
         createdAt: "2026-08-03T10:00:00.000Z"
       },
       {
-        id: "4",
-        title: "リターンサバイバル",
-        author: "",
+        id: "3",
+        title: "三度追放された冒険者、激レア装備と最強スキルで無双する",
+        author: "青木千尋 南野雪花",
         site: "ピッコマ",
-        rating: 4,
+        rating: 3,
         img: "",
-        desc: "",
-        tags: ["サバイバル", "ゾンビ", "かっこいい", "アクション"],
-        scenesCount: 1,
-        createdAt: "2026-08-04T10:00:00.000Z"
-      },
-      {
-        id: "5",
-        title: "葬送のフリーレン",
-        author: "山田鐘人 / アベツカサ",
-        site: "サンデーうぇぶり",
-        rating: 5,
-        img: "",
-        desc: "旅の過程での人間模様が美しい",
-        tags: ["ファンタジー", "ドラマ"],
-        scenesCount: 1,
-        createdAt: "2026-08-05T10:00:00.000Z"
+        desc: "クランを追放された軍師ライオネルが、困窮する美少女3人組の冒険者と出会う。世話を焼くうちに彼女たちに頼られるようになり、自身の本当の評価を開花させていく。",
+        tags: ["かっこいい", "賢い", "仲間"],
+        scenesCount: 0,
+        isBookmarked: false,
+        createdAt: "2026-08-02T10:00:00.000Z"
       }
     ];
 
     let items = [];
+    let imageBase64Cache = "";
 
-    // ローカルストレージ初期化
     function loadStorage() {
       const stored = localStorage.getItem('app_items_data');
       if (stored) {
@@ -245,30 +239,28 @@
       localStorage.setItem('app_items_data', JSON.stringify(items));
     }
 
-    // 星描画ヘルパー
     function getStarsHtml(rating) {
       const r = Math.round(rating || 0);
       const stars = '★'.repeat(r) + '☆'.repeat(5 - r);
       return `<span class="stars">${stars}</span> <span class="rating-text">(${Number(rating).toFixed(1)})</span>`;
     }
 
-    // 一覧描画
     function renderList() {
       const cardList = document.getElementById('card-list');
       const search = document.getElementById('search-input').value.toLowerCase();
       const siteFilter = document.getElementById('site-filter').value;
       const tagFilter = document.getElementById('tag-filter').value;
       const sortValue = document.getElementById('sort-select').value;
+      const bookmarkFilter = document.getElementById('bookmark-filter').value;
 
-      // フィルター処理
       let filtered = items.filter(item => {
         const matchesSearch = item.title.toLowerCase().includes(search) || (item.desc && item.desc.toLowerCase().includes(search));
         const matchesSite = !siteFilter || item.site === siteFilter;
         const matchesTag = !tagFilter || (item.tags && item.tags.includes(tagFilter));
-        return matchesSearch && matchesSite && matchesTag;
+        const matchesBM = bookmarkFilter === 'all' || (bookmarkFilter === 'bookmarked' && item.isBookmarked);
+        return matchesSearch && matchesSite && matchesTag && matchesBM;
       });
 
-      // ソート処理
       filtered.sort((a, b) => {
         const rA = a.rating || 0, rB = b.rating || 0;
         const dA = new Date(a.createdAt || 0).getTime(), dB = new Date(b.createdAt || 0).getTime();
@@ -284,11 +276,14 @@
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-          ${item.img ? `<img src="${item.img}" class="card-img" alt="書影">` : `<div class="card-img">書影</div>`}
+          <div class="card-img-wrapper">
+            ${item.img ? `<img src="${item.img}" class="card-img" alt="書影">` : `<div class="card-img">書影</div>`}
+          </div>
           <div class="card-content">
             <div class="card-header">
-              <div class="card-title">${item.title}</div>
+              <div class="card-title truncated" onclick="toggleText(this)">${item.title}</div>
               <div class="card-actions">
+                <span class="action-icon ${item.isBookmarked ? 'bookmarked' : ''}" onclick="toggleBookmark('${item.id}')">${item.isBookmarked ? '🔖' : '🏷️'}</span>
                 <span>${item.scenesCount || 0}件</span>
                 <span class="action-icon" onclick="editItem('${item.id}')">✏️</span>
                 <span class="action-icon" onclick="deleteItem('${item.id}')">🗑️</span>
@@ -299,7 +294,7 @@
               ${item.site ? `<span class="site-badge">${item.site}</span>` : ''}
             </div>
             <div class="rating-container">${getStarsHtml(item.rating)}</div>
-            ${item.desc ? `<div class="description">${item.desc}</div>` : ''}
+            ${item.desc ? `<div class="description truncated" onclick="toggleText(this)">${item.desc}</div>` : ''}
             <div class="tags">
               ${(item.tags || []).map(t => `<span class="tag">#${t}</span>`).join('')}
             </div>
@@ -311,7 +306,21 @@
       updateFilters();
     }
 
-    // フィルター選択肢の更新
+    // テキスト開閉（全文表示・省略表示切り替え）
+    window.toggleText = function(element) {
+      element.classList.toggle('truncated');
+    };
+
+    // ブックマーク切り替え
+    window.toggleBookmark = function(id) {
+      const item = items.find(i => i.id === id);
+      if (item) {
+        item.isBookmarked = !item.isBookmarked;
+        saveStorage();
+        renderList();
+      }
+    };
+
     function updateFilters() {
       const siteSelect = document.getElementById('site-filter');
       const tagSelect = document.getElementById('tag-filter');
@@ -325,6 +334,18 @@
       siteSelect.innerHTML = '<option value="">すべての掲載サイト</option>' + sites.map(s => `<option value="${s}" ${s === currentSite ? 'selected':''}>${s}</option>`).join('');
       tagSelect.innerHTML = '<option value="">すべてのタグ</option>' + tags.map(t => `<option value="${t}" ${t === currentTag ? 'selected':''}>${t}</option>`).join('');
     }
+
+    // ファイルからBase64画像の読み込み
+    document.getElementById('form-img-file').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          imageBase64Cache = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
 
     // 保存 (書き出し)
     document.getElementById('export-btn').addEventListener('click', () => {
@@ -353,7 +374,7 @@
           renderList();
           alert('データを復元しました。');
         } catch (err) {
-          alert('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。');
+          alert('ファイルの読み込みに失敗しました。');
         }
       };
       reader.readAsText(file);
@@ -363,13 +384,15 @@
     window.editItem = function(id) {
       const item = items.find(i => i.id === id);
       if (!item) return;
+      imageBase64Cache = "";
       document.getElementById('modal-title').innerText = '作品の編集';
       document.getElementById('edit-id').value = item.id;
       document.getElementById('form-title').value = item.title;
       document.getElementById('form-author').value = item.author || '';
       document.getElementById('form-site').value = item.site || '';
       document.getElementById('form-rating').value = item.rating || 5;
-      document.getElementById('form-img').value = item.img || '';
+      document.getElementById('form-img-url').value = item.img || '';
+      document.getElementById('form-img-file').value = '';
       document.getElementById('form-desc').value = item.desc || '';
       document.getElementById('form-tags').value = (item.tags || []).join(', ');
       document.getElementById('item-modal').classList.remove('hidden');
@@ -383,15 +406,17 @@
       }
     };
 
-    // モーダル操作（新規追加・設定）
+    // モーダル操作
     document.getElementById('add-card-btn').addEventListener('click', () => {
+      imageBase64Cache = "";
       document.getElementById('modal-title').innerText = '作品の新規登録';
       document.getElementById('edit-id').value = '';
       document.getElementById('form-title').value = '';
       document.getElementById('form-author').value = '';
       document.getElementById('form-site').value = '';
       document.getElementById('form-rating').value = '5';
-      document.getElementById('form-img').value = '';
+      document.getElementById('form-img-url').value = '';
+      document.getElementById('form-img-file').value = '';
       document.getElementById('form-desc').value = '';
       document.getElementById('form-tags').value = '';
       document.getElementById('item-modal').classList.remove('hidden');
@@ -407,6 +432,7 @@
       if (!title) return alert('タイトルを入力してください');
 
       const tags = document.getElementById('form-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+      const imgSrc = imageBase64Cache || document.getElementById('form-img-url').value;
 
       if (id) {
         const item = items.find(i => i.id === id);
@@ -414,7 +440,7 @@
         item.author = document.getElementById('form-author').value;
         item.site = document.getElementById('form-site').value;
         item.rating = parseFloat(document.getElementById('form-rating').value);
-        item.img = document.getElementById('form-img').value;
+        if (imgSrc) item.img = imgSrc;
         item.desc = document.getElementById('form-desc').value;
         item.tags = tags;
       } else {
@@ -424,10 +450,11 @@
           author: document.getElementById('form-author').value,
           site: document.getElementById('form-site').value,
           rating: parseFloat(document.getElementById('form-rating').value),
-          img: document.getElementById('form-img').value,
+          img: imgSrc,
           desc: document.getElementById('form-desc').value,
           tags,
           scenesCount: 0,
+          isBookmarked: false,
           createdAt: new Date().toISOString()
         });
       }
@@ -442,6 +469,7 @@
     document.getElementById('site-filter').addEventListener('change', renderList);
     document.getElementById('tag-filter').addEventListener('change', renderList);
     document.getElementById('sort-select').addEventListener('change', renderList);
+    document.getElementById('bookmark-filter').addEventListener('change', renderList);
 
     // 設定関連
     const settingsBtn = document.getElementById('settings-btn');
