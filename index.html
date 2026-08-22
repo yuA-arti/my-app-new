@@ -2,497 +2,813 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Favorite Scenes（名シーン記録帳）</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-    body { background-color: #f4f5f7; color: #333; padding: 16px; max-width: 600px; margin: 0 auto; }
-
-    /* 2段折り返し対応ヘッダー */
-    .header-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-bottom: 16px; }
-    .title-group { display: flex; align-items: baseline; gap: 6px; }
-    .title-group h1 { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
-    .sub-title { font-size: 0.8rem; color: #666; }
-    .button-group { display: flex; gap: 6px; margin-left: auto; }
-    
-    .btn { background: #e2e8f0; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; color: #4a5568; cursor: pointer; }
-    .btn:hover { background: #cbd5e0; }
-    .btn-primary { background: #3182ce; color: #fff; }
-    .btn-primary:hover { background: #2b6cb0; }
-
-    /* 検索・ソートエリア */
-    .controls-container { display: flex; flex-direction: column; gap: 8px; background: #fff; padding: 12px; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .search-input, .select-box { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; outline: none; background: #fff; }
-    .select-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-    .add-btn { background: #fff; padding: 10px 12px; border-radius: 8px; margin-bottom: 16px; color: #2563eb; font-weight: bold; font-size: 0.85rem; cursor: pointer; border: none; text-align: left; width: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-
-    /* 作品カード */
-    .card-list { display: flex; flex-direction: column; gap: 12px; }
-    .card { background: #fff; border-radius: 10px; padding: 12px; display: flex; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .card-img-wrapper { width: 65px; height: 85px; flex-shrink: 0; }
-    .card-img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; background: #edf2f7; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #a0aec0; }
-    .card-content { flex: 1; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
-    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    
-    /* タイトルの伸縮設定 */
-    .card-title { font-size: 0.9rem; font-weight: bold; color: #2563eb; cursor: pointer; user-select: none; word-break: break-all; }
-    .card-title.truncated { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-    
-    .card-actions { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #a0aec0; flex-shrink: 0; }
-    .action-icon { cursor: pointer; }
-    .action-icon.bookmarked { color: #e53e3e; }
-
-    .author { font-size: 0.75rem; color: #718096; }
-    .site-badge { background: #ebf8ff; color: #3182ce; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 4px; }
-    
-    /* 星評価 */
-    .rating-container { display: flex; align-items: center; gap: 4px; margin: 2px 0; }
-    .stars { color: #f6e05e; font-size: 0.85rem; letter-spacing: 1px; }
-    .rating-text { font-size: 0.75rem; color: #718096; font-weight: bold; }
-
-    /* あらすじの伸縮設定 */
-    .description { font-size: 0.75rem; color: #4a5568; line-height: 1.4; cursor: pointer; user-select: none; word-break: break-all; }
-    .description.truncated { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-    .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-    .tag { background: #edf2f7; color: #718096; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; }
-
-    /* モーダル */
-    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal.hidden { display: none; }
-    .modal-content { background: #fff; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; max-height: 90vh; overflow-y: auto; }
-    .form-group { display: flex; flex-direction: column; gap: 4px; }
-    .form-group label { font-size: 0.8rem; font-weight: bold; color: #4a5568; }
-    .form-group input, .form-group textarea, .form-group select { padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }
-  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen">
+  <div id="root"></div>
 
-  <!-- ヘッダー -->
-  <header class="header-container">
-    <div class="title-group">
-      <h1>📖 Favorite Scenes</h1>
-      <span class="sub-title">（名シーン記録帳）</span>
-    </div>
-    <div class="button-group">
-      <button class="btn" id="export-btn">保存(書き出し)</button>
-      <button class="btn" id="import-btn">復元(読み込み)</button>
-      <button class="btn" id="settings-btn" title="設定">⚙️</button>
-      <input type="file" id="file-input" style="display: none;" accept=".json">
-    </div>
-  </header>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-  <!-- 検索・ソートエリア -->
-  <div class="controls-container">
-    <input type="text" id="search-input" placeholder="🔍 フリーワード検索..." class="search-input">
-    
-    <div class="select-grid">
-      <select id="site-filter" class="select-box">
-        <option value="">すべての掲載サイト</option>
-      </select>
-      <select id="tag-filter" class="select-box">
-        <option value="">すべてのタグ</option>
-      </select>
-    </div>
+    // SVGアイコン
+    const IconBook = () => <svg className="w-6 h-6 text-blue-600 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>;
+    const IconSearch = () => <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
+    const IconUp = () => <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" /></svg>;
+    const IconDown = () => <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>;
+    const IconPencil = () => (
+      <svg className="w-4 h-4 text-blue-600 hover:text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      </svg>
+    );
+    const IconPencilSmall = () => (
+      <svg className="w-3.5 h-3.5 text-blue-500 hover:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      </svg>
+    );
+    const IconTrash = () => <svg className="w-4 h-4 text-red-500 hover:text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+    const IconTrashSmall = () => <svg className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+    const IconBookmark = () => <svg className="w-3.5 h-3.5 text-gray-600 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>;
+    const IconLock = () => <svg className="w-10 h-10 text-blue-500 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
 
-    <div class="select-grid">
-      <select id="sort-select" class="select-box">
-        <option value="rating-desc">★が多い順</option>
-        <option value="rating-asc">★が少ない順</option>
-        <option value="date-desc">登録が新しい順</option>
-        <option value="date-asc">登録が古い順</option>
-      </select>
-      <select id="bookmark-filter" class="select-box">
-        <option value="all">すべて表示</option>
-        <option value="bookmarked">🔖 ブックマークのみ</option>
-      </select>
-    </div>
-  </div>
+    const CORRECT_PASSWORD = '1234';
 
-  <button class="add-btn" id="add-card-btn">▶ ＋ 新しい作品を登録する</button>
-
-  <!-- 作品一覧 -->
-  <div class="card-list" id="card-list"></div>
-
-  <!-- 設定モーダル -->
-  <div id="settings-modal" class="modal hidden">
-    <div class="modal-content">
-      <h3>⚙️ 設定</h3>
-      <div class="form-group">
-        <label for="default-sort">デフォルトの並び順</label>
-        <select id="default-sort" class="select-box">
-          <option value="rating-desc">★が多い順</option>
-          <option value="rating-asc">★が少ない順</option>
-          <option value="date-desc">登録が新しい順</option>
-          <option value="date-asc">登録が古い順</option>
-        </select>
-      </div>
-      <button id="close-settings" class="btn btn-primary">保存して閉じる</button>
-    </div>
-  </div>
-
-  <!-- 登録・編集モーダル -->
-  <div id="item-modal" class="modal hidden">
-    <div class="modal-content">
-      <h3 id="modal-title">作品の登録</h3>
-      <input type="hidden" id="edit-id">
-      <div class="form-group">
-        <label>タイトル</label>
-        <input type="text" id="form-title" required>
-      </div>
-      <div class="form-group">
-        <label>作者</label>
-        <input type="text" id="form-author">
-      </div>
-      <div class="form-group">
-        <label>掲載サイト</label>
-        <input type="text" id="form-site" placeholder="例: ピッコマ">
-      </div>
-      <div class="form-group">
-        <label>評価（★1〜5）</label>
-        <select id="form-rating" class="select-box">
-          <option value="5">★★★★★ (5.0)</option>
-          <option value="4">★★★★☆ (4.0)</option>
-          <option value="3">★★★☆☆ (3.0)</option>
-          <option value="2">★★☆☆☆ (2.0)</option>
-          <option value="1">★☆☆☆☆ (1.0)</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>画像ファイルを選択 (ファイルまたはURL)</label>
-        <input type="file" id="form-img-file" accept="image/*">
-        <input type="text" id="form-img-url" placeholder="または画像URL (https://...)" style="margin-top: 4px;">
-      </div>
-      <div class="form-group">
-        <label>あらすじ・メモ</label>
-        <textarea id="form-desc" rows="3"></textarea>
-      </div>
-      <div class="form-group">
-        <label>タグ (カンマ区切り)</label>
-        <input type="text" id="form-tags" placeholder="かっこいい, サバイバル">
-      </div>
-      <div style="display:flex; gap:8px; margin-top:8px;">
-        <button id="save-item-btn" class="btn btn-primary" style="flex:1;">保存</button>
-        <button id="cancel-item-btn" class="btn" style="flex:1;">キャンセル</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const initialData = [
-      {
-        id: "1",
-        title: "悪役に転生したらイケメンと無人島でサバイバルする羽目になった",
-        author: "Mongdang, nonon, Kim Zia",
-        site: "ピッコマ",
-        rating: 5,
-        img: "",
-        desc: "事故で死んだら小説の嫌われ悪役に転生！しかも殺されるかもしれないイケメンたちと無人島でサバイバルする羽目になり、過酷な状況の中で生き残りをかけて協力することに...",
-        tags: ["絵が綺麗", "主人公が魅力的", "サバイバル"],
-        scenesCount: 0,
-        isBookmarked: true,
-        createdAt: "2026-08-01T10:00:00.000Z"
-      },
-      {
-        id: "2",
-        title: "回帰した鉄血の猟犬",
-        author: "",
-        site: "ピッコマ",
-        rating: 4,
-        img: "",
-        desc: "裏切られ処刑された猟犬が過去に回帰し、圧倒的な力と知略で運命を覆していく無双ファンタジー。",
-        tags: ["かっこいい"],
-        scenesCount: 1,
-        isBookmarked: false,
-        createdAt: "2026-08-03T10:00:00.000Z"
-      },
-      {
-        id: "3",
-        title: "三度追放された冒険者、激レア装備と最強スキルで無双する",
-        author: "青木千尋 南野雪花",
-        site: "ピッコマ",
-        rating: 3,
-        img: "",
-        desc: "クランを追放された軍師ライオネルが、困窮する美少女3人組の冒険者と出会う。世話を焼くうちに彼女たちに頼られるようになり、自身の本当の評価を開花させていく。",
-        tags: ["かっこいい", "賢い", "仲間"],
-        scenesCount: 0,
-        isBookmarked: false,
-        createdAt: "2026-08-02T10:00:00.000Z"
-      }
-    ];
-
-    let items = [];
-    let imageBase64Cache = "";
-
-    function loadStorage() {
-      const stored = localStorage.getItem('app_items_data');
-      if (stored) {
-        items = JSON.parse(stored);
-      } else {
-        items = initialData;
-        saveStorage();
-      }
-    }
-
-    function saveStorage() {
-      localStorage.setItem('app_items_data', JSON.stringify(items));
-    }
-
-    function getStarsHtml(rating) {
-      const r = Math.round(rating || 0);
-      const stars = '★'.repeat(r) + '☆'.repeat(5 - r);
-      return `<span class="stars">${stars}</span> <span class="rating-text">(${Number(rating).toFixed(1)})</span>`;
-    }
-
-    function renderList() {
-      const cardList = document.getElementById('card-list');
-      const search = document.getElementById('search-input').value.toLowerCase();
-      const siteFilter = document.getElementById('site-filter').value;
-      const tagFilter = document.getElementById('tag-filter').value;
-      const sortValue = document.getElementById('sort-select').value;
-      const bookmarkFilter = document.getElementById('bookmark-filter').value;
-
-      let filtered = items.filter(item => {
-        const matchesSearch = item.title.toLowerCase().includes(search) || (item.desc && item.desc.toLowerCase().includes(search));
-        const matchesSite = !siteFilter || item.site === siteFilter;
-        const matchesTag = !tagFilter || (item.tags && item.tags.includes(tagFilter));
-        const matchesBM = bookmarkFilter === 'all' || (bookmarkFilter === 'bookmarked' && item.isBookmarked);
-        return matchesSearch && matchesSite && matchesTag && matchesBM;
-      });
-
-      filtered.sort((a, b) => {
-        const rA = a.rating || 0, rB = b.rating || 0;
-        const dA = new Date(a.createdAt || 0).getTime(), dB = new Date(b.createdAt || 0).getTime();
-        if (sortValue === 'rating-desc') return rB - rA;
-        if (sortValue === 'rating-asc') return rA - rB;
-        if (sortValue === 'date-desc') return dB - dA;
-        if (sortValue === 'date-asc') return dA - dB;
-        return 0;
-      });
-
-      cardList.innerHTML = '';
-      filtered.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          <div class="card-img-wrapper">
-            ${item.img ? `<img src="${item.img}" class="card-img" alt="書影">` : `<div class="card-img">書影</div>`}
-          </div>
-          <div class="card-content">
-            <div class="card-header">
-              <div class="card-title truncated" onclick="toggleText(this)">${item.title}</div>
-              <div class="card-actions">
-                <span class="action-icon ${item.isBookmarked ? 'bookmarked' : ''}" onclick="toggleBookmark('${item.id}')">${item.isBookmarked ? '🔖' : '🏷️'}</span>
-                <span>${item.scenesCount || 0}件</span>
-                <span class="action-icon" onclick="editItem('${item.id}')">✏️</span>
-                <span class="action-icon" onclick="deleteItem('${item.id}')">🗑️</span>
-              </div>
-            </div>
-            <div class="author">
-              ${item.author || ''} 
-              ${item.site ? `<span class="site-badge">${item.site}</span>` : ''}
-            </div>
-            <div class="rating-container">${getStarsHtml(item.rating)}</div>
-            ${item.desc ? `<div class="description truncated" onclick="toggleText(this)">${item.desc}</div>` : ''}
-            <div class="tags">
-              ${(item.tags || []).map(t => `<span class="tag">#${t}</span>`).join('')}
-            </div>
-          </div>
-        `;
-        cardList.appendChild(card);
-      });
-
-      updateFilters();
-    }
-
-    // テキスト開閉（全文表示・省略表示切り替え）
-    window.toggleText = function(element) {
-      element.classList.toggle('truncated');
-    };
-
-    // ブックマーク切り替え
-    window.toggleBookmark = function(id) {
-      const item = items.find(i => i.id === id);
-      if (item) {
-        item.isBookmarked = !item.isBookmarked;
-        saveStorage();
-        renderList();
-      }
-    };
-
-    function updateFilters() {
-      const siteSelect = document.getElementById('site-filter');
-      const tagSelect = document.getElementById('tag-filter');
-      
-      const currentSite = siteSelect.value;
-      const currentTag = tagSelect.value;
-
-      const sites = [...new Set(items.map(i => i.site).filter(Boolean))];
-      const tags = [...new Set(items.flatMap(i => i.tags || []).filter(Boolean))];
-
-      siteSelect.innerHTML = '<option value="">すべての掲載サイト</option>' + sites.map(s => `<option value="${s}" ${s === currentSite ? 'selected':''}>${s}</option>`).join('');
-      tagSelect.innerHTML = '<option value="">すべてのタグ</option>' + tags.map(t => `<option value="${t}" ${t === currentTag ? 'selected':''}>${t}</option>`).join('');
-    }
-
-    // ファイルからBase64画像の読み込み
-    document.getElementById('form-img-file').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
+    // 画像圧縮処理関数
+    const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.7) => {
+      return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (event) => {
-          imageBase64Cache = event.target.result;
-        };
         reader.readAsDataURL(file);
-      }
-    });
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
 
-    // 保存 (書き出し)
-    document.getElementById('export-btn').addEventListener('click', () => {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", "favorite_scenes_backup.json");
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    });
+            if (width > height) {
+              if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width = Math.round((width * maxHeight) / height);
+                height = maxHeight;
+              }
+            }
 
-    // 復元 (読み込み)
-    document.getElementById('import-btn').addEventListener('click', () => {
-      document.getElementById('file-input').click();
-    });
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
 
-    document.getElementById('file-input').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
+            const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressedBase64);
+          };
+          img.onerror = (error) => reject(error);
+        };
+        reader.onerror = (error) => reject(error);
+      });
+    };
+
+    function App() {
+      const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        try { return sessionStorage.getItem('manga_log_auth') === 'true'; } catch(e) { return false; }
+      });
+      const [passwordInput, setPasswordInput] = useState('');
+      const [passError, setPassError] = useState(false);
+
+      const [works, setWorks] = useState(() => {
         try {
-          items = JSON.parse(event.target.result);
-          saveStorage();
-          renderList();
-          alert('データを復元しました。');
-        } catch (err) {
-          alert('ファイルの読み込みに失敗しました。');
+          const saved = localStorage.getItem('manga_scene_works');
+          return saved ? JSON.parse(saved) : [];
+        } catch(e) { return []; }
+      });
+
+      const [searchWord, setSearchWord] = useState('');
+      const [selectedTag, setSelectedTag] = useState('');
+      const [selectedSite, setSelectedSite] = useState('');
+
+      const [expandedMap, setExpandedMap] = useState({});
+      const [expandedTitles, setExpandedTitles] = useState({});
+      const [expandedMemos, setExpandedMemos] = useState({});
+
+      const [newTitle, setNewTitle] = useState('');
+      const [newAuthor, setNewAuthor] = useState('');
+      const [newImage, setNewImage] = useState('');
+      const [newSite, setNewSite] = useState('');
+      const [newWorkTags, setNewWorkTags] = useState('');
+      const [newWorkMemo, setNewWorkMemo] = useState('');
+
+      const [editingWorkId, setEditingWorkId] = useState(null);
+      const [editWorkData, setEditWorkData] = useState({});
+
+      const [sceneInputs, setSceneInputs] = useState({});
+
+      const [editingSceneId, setEditingSceneId] = useState(null);
+      const [editSceneData, setEditSceneData] = useState({});
+
+      const [previewImageUrl, setPreviewImageUrl] = useState(null);
+
+      const fileInputRef = useRef(null);
+
+      useEffect(() => {
+        try {
+          localStorage.setItem('manga_scene_works', JSON.stringify(works));
+        } catch(e) {
+          alert('保存容量の上限を超えた可能性があります。古い画像を削除するかバックアップを取ってください。');
+        }
+      }, [works]);
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (passwordInput === CORRECT_PASSWORD) {
+          setIsAuthenticated(true);
+          try { sessionStorage.setItem('manga_log_auth', 'true'); } catch(e) {}
+          setPassError(false);
+        } else {
+          setPassError(true);
         }
       };
-      reader.readAsText(file);
-    });
 
-    // 編集・削除
-    window.editItem = function(id) {
-      const item = items.find(i => i.id === id);
-      if (!item) return;
-      imageBase64Cache = "";
-      document.getElementById('modal-title').innerText = '作品の編集';
-      document.getElementById('edit-id').value = item.id;
-      document.getElementById('form-title').value = item.title;
-      document.getElementById('form-author').value = item.author || '';
-      document.getElementById('form-site').value = item.site || '';
-      document.getElementById('form-rating').value = item.rating || 5;
-      document.getElementById('form-img-url').value = item.img || '';
-      document.getElementById('form-img-file').value = '';
-      document.getElementById('form-desc').value = item.desc || '';
-      document.getElementById('form-tags').value = (item.tags || []).join(', ');
-      document.getElementById('item-modal').classList.remove('hidden');
-    };
+      const handleImageChange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          try {
+            const compressed = await compressImage(file);
+            setNewImage(compressed);
+          } catch (err) {
+            alert('画像の読み込み・圧縮に失敗しました');
+          }
+        }
+      };
 
-    window.deleteItem = function(id) {
-      if (confirm('本当に削除しますか？')) {
-        items = items.filter(i => i.id !== id);
-        saveStorage();
-        renderList();
-      }
-    };
+      const handleEditImageChange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          try {
+            const compressed = await compressImage(file);
+            setEditWorkData({ ...editWorkData, image: compressed });
+          } catch (err) {
+            alert('画像の読み込み・圧縮に失敗しました');
+          }
+        }
+      };
 
-    // モーダル操作
-    document.getElementById('add-card-btn').addEventListener('click', () => {
-      imageBase64Cache = "";
-      document.getElementById('modal-title').innerText = '作品の新規登録';
-      document.getElementById('edit-id').value = '';
-      document.getElementById('form-title').value = '';
-      document.getElementById('form-author').value = '';
-      document.getElementById('form-site').value = '';
-      document.getElementById('form-rating').value = '5';
-      document.getElementById('form-img-url').value = '';
-      document.getElementById('form-img-file').value = '';
-      document.getElementById('form-desc').value = '';
-      document.getElementById('form-tags').value = '';
-      document.getElementById('item-modal').classList.remove('hidden');
-    });
+      const handleSceneImageChange = async (workId, e) => {
+        const file = e.target.files[0];
+        if (file) {
+          try {
+            const compressed = await compressImage(file);
+            handleSceneInputChange(workId, 'image', compressed);
+          } catch (err) {
+            alert('画像の読み込み・圧縮に失敗しました');
+          }
+        }
+      };
 
-    document.getElementById('cancel-item-btn').addEventListener('click', () => {
-      document.getElementById('item-modal').classList.add('hidden');
-    });
+      const handleEditSceneImageChange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          try {
+            const compressed = await compressImage(file);
+            setEditSceneData({ ...editSceneData, image: compressed });
+          } catch (err) {
+            alert('画像の読み込み・圧縮に失敗しました');
+          }
+        }
+      };
 
-    document.getElementById('save-item-btn').addEventListener('click', () => {
-      const id = document.getElementById('edit-id').value;
-      const title = document.getElementById('form-title').value;
-      if (!title) return alert('タイトルを入力してください');
+      const addWork = (e) => {
+        e.preventDefault();
+        if (!newTitle.trim()) return;
+        const newId = Date.now();
+        const item = {
+          id: newId,
+          title: newTitle,
+          author: newAuthor,
+          image: newImage,
+          site: newSite,
+          tags: newWorkTags ? newWorkTags.split(',').map(t => t.trim()).filter(Boolean) : [],
+          memo: newWorkMemo,
+          scenes: []
+        };
+        setWorks([item, ...works]);
+        setExpandedMap(prev => ({ ...prev, [newId]: true }));
+        setNewTitle(''); setNewAuthor(''); setNewImage(''); setNewSite(''); setNewWorkTags(''); setNewWorkMemo('');
+      };
 
-      const tags = document.getElementById('form-tags').value.split(',').map(t => t.trim()).filter(Boolean);
-      const imgSrc = imageBase64Cache || document.getElementById('form-img-url').value;
-
-      if (id) {
-        const item = items.find(i => i.id === id);
-        item.title = title;
-        item.author = document.getElementById('form-author').value;
-        item.site = document.getElementById('form-site').value;
-        item.rating = parseFloat(document.getElementById('form-rating').value);
-        if (imgSrc) item.img = imgSrc;
-        item.desc = document.getElementById('form-desc').value;
-        item.tags = tags;
-      } else {
-        items.push({
-          id: Date.now().toString(),
-          title,
-          author: document.getElementById('form-author').value,
-          site: document.getElementById('form-site').value,
-          rating: parseFloat(document.getElementById('form-rating').value),
-          img: imgSrc,
-          desc: document.getElementById('form-desc').value,
-          tags,
-          scenesCount: 0,
-          isBookmarked: false,
-          createdAt: new Date().toISOString()
+      const startEditWork = (work, e) => {
+        e.stopPropagation();
+        setEditingWorkId(work.id);
+        setEditWorkData({
+          title: work.title || '',
+          author: work.author || '',
+          site: work.site || '',
+          image: work.image || '',
+          tags: (work.tags || []).join(', '),
+          memo: work.memo || ''
         });
+      };
+
+      const saveEditWork = (workId, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!editWorkData.title.trim()) return;
+
+        setWorks(works.map(w => {
+          if (w.id === workId) {
+            return {
+              ...w,
+              title: editWorkData.title,
+              author: editWorkData.author,
+              site: editWorkData.site,
+              image: editWorkData.image,
+              tags: editWorkData.tags ? editWorkData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+              memo: editWorkData.memo
+            };
+          }
+          return w;
+        }));
+        setEditingWorkId(null);
+      };
+
+      const deleteWork = (id, e) => {
+        e.stopPropagation();
+        if (window.confirm('この作品と登録されたBookmarkをすべて削除しますか？')) {
+          setWorks(works.filter(w => w.id !== id));
+        }
+      };
+
+      const toggleExpand = (id) => {
+        if (editingWorkId === id) return;
+        setExpandedMap(prev => ({ ...prev, [id]: !prev[id] }));
+      };
+
+      const toggleTitleExpand = (id, e) => {
+        e.stopPropagation();
+        setExpandedTitles(prev => ({ ...prev, [id]: !prev[id] }));
+      };
+
+      const toggleMemoExpand = (id, e) => {
+        e.stopPropagation();
+        setExpandedMemos(prev => ({ ...prev, [id]: !prev[id] }));
+      };
+
+      const addScene = (workId, e) => {
+        if (e) e.preventDefault();
+        const input = sceneInputs[workId] || {};
+        if (!input.memo?.trim() && !input.image) return;
+
+        const newScene = {
+          id: Date.now(),
+          chapter: input.chapter || '',
+          page: input.page || '',
+          memo: input.memo || '',
+          image: input.image || '',
+          tags: input.tags ? input.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+        };
+
+        setWorks(works.map(w => {
+          if (w.id === workId) {
+            return { ...w, scenes: [...(w.scenes || []), newScene] };
+          }
+          return w;
+        }));
+
+        setSceneInputs({ ...sceneInputs, [workId]: { chapter: '', page: '', memo: '', image: '', tags: '' } });
+      };
+
+      const startEditScene = (scene, e) => {
+        e.stopPropagation();
+        setEditingSceneId(scene.id);
+        setEditSceneData({
+          chapter: scene.chapter || '',
+          page: scene.page || '',
+          memo: scene.memo || '',
+          image: scene.image || '',
+          tags: (scene.tags || []).join(', ')
+        });
+      };
+
+      const saveEditScene = (workId, sceneId, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!editSceneData.memo.trim() && !editSceneData.image) return;
+
+        setWorks(works.map(w => {
+          if (w.id === workId) {
+            return {
+              ...w,
+              scenes: w.scenes.map(s => {
+                if (s.id === sceneId) {
+                  return {
+                    ...s,
+                    chapter: editSceneData.chapter,
+                    page: editSceneData.page,
+                    memo: editSceneData.memo,
+                    image: editSceneData.image,
+                    tags: editSceneData.tags ? editSceneData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+                  };
+                }
+                return s;
+              })
+            };
+          }
+          return w;
+        }));
+        setEditingSceneId(null);
+      };
+
+      const deleteScene = (workId, sceneId) => {
+        setWorks(works.map(w => {
+          if (w.id === workId) {
+            return { ...w, scenes: w.scenes.filter(s => s.id !== sceneId) };
+          }
+          return w;
+        }));
+      };
+
+      const handleSceneInputChange = (workId, field, value) => {
+        setSceneInputs({
+          ...sceneInputs,
+          [workId]: { ...(sceneInputs[workId] || {}), [field]: value }
+        });
+      };
+
+      const exportBackup = async () => {
+        const jsonString = JSON.stringify(works, null, 2);
+        const fileName = `favorite_scenes_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const file = new File([blob], fileName, { type: 'application/json' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Favorite Scenes バックアップ',
+              text: 'Favorite Scenesのバックアップデータです。'
+            });
+            return;
+          } catch (err) {
+            if (err.name === 'AbortError') return;
+          }
+        }
+
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", URL.createObjectURL(blob));
+        downloadAnchor.setAttribute("download", fileName);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+      };
+
+      const importBackup = (e) => {
+        const fileReader = new FileReader();
+        if (e.target.files[0]) {
+          fileReader.readAsText(e.target.files[0], "UTF-8");
+          fileReader.onload = (event) => {
+            try {
+              const parsed = JSON.parse(event.target.result);
+              if (Array.isArray(parsed) && window.confirm('現在のデータを上書きして復元しますか？')) {
+                setWorks(parsed);
+                alert('データを復元しました！');
+              }
+            } catch(err) {
+              alert('ファイルの読み込みに失敗しました。正しいバックアップファイルを選択してください。');
+            }
+          };
+        }
+      };
+
+      const allSites = Array.from(new Set(works.map(w => w.site).filter(Boolean)));
+      const allTags = Array.from(new Set([
+        ...works.flatMap(w => w.tags || []),
+        ...works.flatMap(w => (w.scenes || []).flatMap(s => s.tags || []))
+      ]));
+
+      const isSearching = searchWord !== '' || selectedTag !== '' || selectedSite !== '';
+
+      const filteredWorks = works.filter(w => {
+        const matchWord = searchWord === '' || 
+          (w.title && w.title.toLowerCase().includes(searchWord.toLowerCase())) ||
+          (w.author && w.author.toLowerCase().includes(searchWord.toLowerCase())) ||
+          (w.memo && w.memo.toLowerCase().includes(searchWord.toLowerCase())) ||
+          (w.scenes && w.scenes.some(s => s.memo && s.memo.toLowerCase().includes(searchWord.toLowerCase())));
+
+        const matchSite = selectedSite === '' || w.site === selectedSite;
+
+        const matchTag = selectedTag === '' || 
+          (w.tags && w.tags.includes(selectedTag)) ||
+          (w.scenes && w.scenes.some(s => s.tags && s.tags.includes(selectedTag)));
+
+        return matchWord && matchSite && matchTag;
+      });
+
+      if (!isAuthenticated) {
+        return (
+          <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
+            <form onSubmit={handleLogin} className="bg-white p-6 rounded-xl shadow-md text-center w-80">
+              <IconLock />
+              <h2 className="text-xl font-bold mb-4">Favorite Scenes<br/><span className="text-sm font-normal text-gray-500">（名シーン記録帳）</span></h2>
+              <input
+                type="password"
+                placeholder="パスワードを入力"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                className="w-full p-2 rounded border mb-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {passError && <p className="text-red-500 text-xs mb-2">パスワードが違います</p>}
+              <button type="submit" className="w-full p-2.5 bg-blue-600 text-white rounded font-bold text-sm hover:bg-blue-700">
+                解除する
+              </button>
+            </form>
+          </div>
+        );
       }
 
-      saveStorage();
-      renderList();
-      document.getElementById('item-modal').classList.add('hidden');
-    });
+      return (
+        <div className="max-w-2xl mx-auto p-3 text-gray-800 min-h-screen pb-12">
+          <div className="flex justify-between items-center mb-3">
+            <h1 className="flex items-center gap-2 text-lg sm:text-xl font-bold text-gray-900">
+              <IconBook /> Favorite Scenes <span className="text-xs sm:text-sm font-normal text-gray-500">（名シーン記録帳）</span>
+            </h1>
+            <div className="flex gap-1.5 text-[10px]">
+              <button onClick={exportBackup} className="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-gray-700 font-bold">
+                保存(書き出し)
+              </button>
+              <button onClick={() => fileInputRef.current?.click()} className="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-gray-700 font-bold">
+                復元(読み込み)
+              </button>
+              <input type="file" ref={fileInputRef} onChange={importBackup} accept=".json" className="hidden" />
+            </div>
+          </div>
 
-    // イベントリスナー
-    document.getElementById('search-input').addEventListener('input', renderList);
-    document.getElementById('site-filter').addEventListener('change', renderList);
-    document.getElementById('tag-filter').addEventListener('change', renderList);
-    document.getElementById('sort-select').addEventListener('change', renderList);
-    document.getElementById('bookmark-filter').addEventListener('change', renderList);
+          {/* 検索・フィルター */}
+          <div className="bg-white p-3 rounded-lg shadow-sm mb-3 border">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex items-center gap-2 border rounded px-2 py-1.5 bg-white">
+                <IconSearch />
+                <input
+                  type="text"
+                  placeholder="フリーワード検索..."
+                  value={searchWord}
+                  onChange={e => setSearchWord(e.target.value)}
+                  className="w-full border-none outline-none text-sm"
+                />
+              </div>
 
-    // 設定関連
-    const settingsBtn = document.getElementById('settings-btn');
-    const settingsModal = document.getElementById('settings-modal');
-    const closeSettingsBtn = document.getElementById('close-settings');
-    const sortSelect = document.getElementById('sort-select');
-    const defaultSortSelect = document.getElementById('default-sort');
+              <div className="flex gap-2">
+                <select value={selectedSite} onChange={e => setSelectedSite(e.target.value)} className="flex-1 p-1.5 text-xs rounded border bg-white">
+                  <option value="">すべての掲載サイト</option>
+                  {allSites.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
 
-    settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-    closeSettingsBtn.addEventListener('click', () => {
-      const def = defaultSortSelect.value;
-      localStorage.setItem('app_default_sort', def);
-      sortSelect.value = def;
-      renderList();
-      settingsModal.classList.add('hidden');
-    });
+                <select value={selectedTag} onChange={e => setSelectedTag(e.target.value)} className="flex-1 p-1.5 text-xs rounded border bg-white">
+                  <option value="">すべてのタグ</option>
+                  {allTags.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
 
-    // 初期化
-    loadStorage();
-    const savedDefault = localStorage.getItem('app_default_sort') || 'rating-desc';
-    sortSelect.value = savedDefault;
-    defaultSortSelect.value = savedDefault;
-    renderList();
+          {/* 新規作品登録フォーム */}
+          <details className="bg-white p-3 rounded-lg shadow-sm mb-3 border">
+            <summary className="font-bold cursor-pointer text-blue-600 text-sm">＋ 新しい作品を登録する</summary>
+            <form onSubmit={addWork} className="flex flex-col gap-2 mt-3 text-xs">
+              <div className="flex gap-2">
+                <input type="text" placeholder="作品タイトル（必須）" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="flex-[2] p-2 rounded border text-sm" />
+                <input type="text" placeholder="著者名" value={newAuthor} onChange={e => setNewAuthor(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
+              </div>
+              <div className="flex gap-2">
+                <input type="text" placeholder="掲載サイト（例：ピッコマ）" value={newSite} onChange={e => setNewSite(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
+                <input type="text" placeholder="作品タグ（カンマ区切り）" value={newWorkTags} onChange={e => setNewWorkTags(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
+              </div>
+              
+              <div className="flex flex-col gap-1">
+                <label className="font-bold text-gray-600">表紙画像を選択 (自動圧縮):</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageChange} 
+                  className="p-1 border rounded text-xs bg-white"
+                />
+                {newImage && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <img src={newImage} alt="プレビュー" className="w-10 h-14 object-cover rounded border" />
+                    <button type="button" onClick={() => setNewImage('')} className="text-red-500 text-xs underline">画像を削除</button>
+                  </div>
+                )}
+              </div>
+
+              <textarea placeholder="作品全体のメモ" value={newWorkMemo} onChange={e => setNewWorkMemo(e.target.value)} className="p-2 rounded border h-16 text-sm" />
+              <button type="submit" className="p-2.5 bg-blue-600 text-white rounded font-bold text-sm mt-1">作品を保存</button>
+            </form>
+          </details>
+
+          {/* 作品一覧 */}
+          <div className="flex flex-col gap-3">
+            {filteredWorks.map(work => {
+              const isOpen = isSearching ? true : !!expandedMap[work.id];
+              const isEditing = editingWorkId === work.id;
+              const isTitleExpanded = !!expandedTitles[work.id];
+              const isMemoExpanded = !!expandedMemos[work.id];
+              const currentInput = sceneInputs[work.id] || {};
+
+              return (
+                <div key={work.id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                  
+                  {/* 作品編集モード画面 */}
+                  {isEditing ? (
+                    <form onSubmit={(e) => saveEditWork(work.id, e)} className="p-3 bg-blue-50/50 flex flex-col gap-2 text-xs">
+                      <h4 className="font-bold text-blue-600 mb-1">作品情報の修正</h4>
+                      <div className="flex gap-2">
+                        <input type="text" placeholder="タイトル" value={editWorkData.title} onChange={e => setEditWorkData({...editWorkData, title: e.target.value})} className="flex-[2] p-1.5 rounded border text-xs" />
+                        <input type="text" placeholder="著者名" value={editWorkData.author} onChange={e => setEditWorkData({...editWorkData, author: e.target.value})} className="flex-1 p-1.5 rounded border text-xs" />
+                      </div>
+                      <div className="flex gap-2">
+                        <input type="text" placeholder="掲載サイト" value={editWorkData.site} onChange={e => setEditWorkData({...editWorkData, site: e.target.value})} className="flex-1 p-1.5 rounded border text-xs" />
+                        <input type="text" placeholder="タグ (カンマ区切り)" value={editWorkData.tags} onChange={e => setEditWorkData({...editWorkData, tags: e.target.value})} className="flex-1 p-1.5 rounded border text-xs" />
+                      </div>
+                      
+                      <div className="flex flex-col gap-1">
+                        <label className="font-bold text-gray-600">画像を変更 (自動圧縮):</label>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleEditImageChange} 
+                          className="p-1 border rounded text-xs bg-white"
+                        />
+                        {editWorkData.image && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <img src={editWorkData.image} alt="プレビュー" className="w-10 h-14 object-cover rounded border" />
+                            <button type="button" onClick={() => setEditWorkData({...editWorkData, image: ''})} className="text-red-500 text-xs underline">画像を削除</button>
+                          </div>
+                        )}
+                      </div>
+
+                      <textarea placeholder="作品メモ" value={editWorkData.memo} onChange={e => setEditWorkData({...editWorkData, memo: e.target.value})} className="p-1.5 rounded border text-xs h-14" />
+                      <div className="flex justify-end gap-2 mt-1">
+                        <button type="button" onClick={() => setEditingWorkId(null)} className="px-3 py-1 bg-gray-300 text-gray-700 rounded">キャンセル</button>
+                        <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded font-bold">更新を保存</button>
+                      </div>
+                    </form>
+                  ) : (
+                    /* 通常の作品表示ヘッダー */
+                    <div 
+                      onClick={() => toggleExpand(work.id)} 
+                      className={`p-3 flex gap-3 cursor-pointer select-none active:bg-gray-100 ${isOpen ? 'border-b' : ''}`}
+                    >
+                      {work.image ? (
+                        <img 
+                          src={work.image} 
+                          alt={work.title} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewImageUrl(work.image);
+                          }}
+                          className="w-12 h-16 object-cover rounded flex-shrink-0 hover:opacity-80 transition-opacity cursor-zoom-in" 
+                        />
+                      ) : (
+                        <div className="w-12 h-16 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+                          <IconBook />
+                        </div>
+                      )}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-1">
+                          <div className="min-w-0 flex-1">
+                            <h2 
+                              onClick={(e) => toggleTitleExpand(work.id, e)}
+                              className={`font-bold text-sm text-blue-600 active:opacity-75 ${isTitleExpanded ? 'whitespace-normal break-words' : 'truncate'}`}
+                              title="タップで全文表示/省略"
+                            >
+                              {work.title}
+                            </h2>
+                            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                              {work.author && <span className="text-[11px] text-gray-500">{work.author}</span>}
+                              {work.site && <span className="text-[10px] bg-blue-50 text-blue-600 px-1 py-0.5 rounded">{work.site}</span>}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <span className="text-[10px] text-gray-400 mr-1">{work.scenes?.length || 0}件</span>
+                            <button onClick={(e) => startEditWork(work, e)} title="作品情報を編集" className="p-1 hover:bg-gray-200 rounded">
+                              <IconPencil />
+                            </button>
+                            <button onClick={(e) => deleteWork(work.id, e)} title="削除" className="p-1 hover:bg-gray-200 rounded">
+                              <IconTrash />
+                            </button>
+                            {isOpen ? <IconUp /> : <IconDown />}
+                          </div>
+                        </div>
+
+                        {work.memo && (
+                          <p 
+                            onClick={(e) => toggleMemoExpand(work.id, e)}
+                            className={`text-xs text-gray-600 mt-1 active:opacity-75 ${isMemoExpanded ? 'whitespace-normal break-words' : 'line-clamp-2'}`}
+                            title="タップで全文表示/省略"
+                          >
+                            {work.memo}
+                          </p>
+                        )}
+
+                        {work.tags && work.tags.length > 0 && (
+                          <div className="flex gap-1 flex-wrap mt-1.5">
+                            {work.tags.map((t, idx) => (
+                              <span key={idx} className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">#{t}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bookmark一覧・追加フォーム */}
+                  {isOpen && !isEditing && (
+                    <div className="bg-gray-50 p-3">
+                      <h3 className="text-xs font-bold text-gray-600 mb-2 flex items-center gap-1">
+                        <IconBookmark /> Bookmark ({work.scenes?.length || 0})
+                      </h3>
+
+                      <div className="flex flex-col gap-2 mb-3">
+                        {work.scenes && work.scenes.map(scene => {
+                          const isSceneEditing = editingSceneId === scene.id;
+
+                          return isSceneEditing ? (
+                            /* Bookmark編集フォーム */
+                            <form key={scene.id} onSubmit={(e) => saveEditScene(work.id, scene.id, e)} className="bg-blue-50/70 border border-blue-200 p-2.5 rounded shadow-sm text-xs flex flex-col gap-1.5">
+                              <div className="flex gap-1">
+                                <input
+                                  type="text"
+                                  placeholder="話数"
+                                  value={editSceneData.chapter}
+                                  onChange={e => setEditSceneData({...editSceneData, chapter: e.target.value})}
+                                  className="flex-1 p-1.5 rounded border text-xs"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="ページ"
+                                  value={editSceneData.page}
+                                  onChange={e => setEditSceneData({...editSceneData, page: e.target.value})}
+                                  className="w-20 p-1.5 rounded border text-xs"
+                                />
+                              </div>
+                              <input
+                                type="text"
+                                placeholder="タグ"
+                                value={editSceneData.tags}
+                                onChange={e => setEditSceneData({...editSceneData, tags: e.target.value})}
+                                className="w-full p-1.5 rounded border text-xs"
+                              />
+                              <textarea
+                                placeholder="名シーンのメモ"
+                                value={editSceneData.memo}
+                                onChange={e => setEditSceneData({...editSceneData, memo: e.target.value})}
+                                className="w-full p-1.5 rounded border text-xs h-14"
+                              />
+                              
+                              <div className="flex flex-col gap-1">
+                                <label className="font-bold text-gray-600">画像を変更:</label>
+                                <input 
+                                  type="file" 
+                                  accept="image/*" 
+                                  onChange={handleEditSceneImageChange} 
+                                  className="p-1 border rounded text-xs bg-white"
+                                />
+                                {editSceneData.image && (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <img src={editSceneData.image} alt="プレビュー" className="w-12 h-12 object-cover rounded border" />
+                                    <button type="button" onClick={() => setEditSceneData({...editSceneData, image: ''})} className="text-red-500 text-xs underline">画像を削除</button>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex justify-end gap-2 mt-1">
+                                <button type="button" onClick={() => setEditingSceneId(null)} className="px-2.5 py-1 bg-gray-300 text-gray-700 rounded">キャンセル</button>
+                                <button type="submit" className="px-2.5 py-1 bg-blue-600 text-white rounded font-bold">更新</button>
+                              </div>
+                            </form>
+                          ) : (
+                            /* 通常のBookmark表示 */
+                            <div key={scene.id} className="bg-white p-2.5 rounded border shadow-sm text-xs flex gap-2 items-start">
+                              {scene.image && (
+                                <img 
+                                  src={scene.image} 
+                                  alt="Scene" 
+                                  onClick={() => setPreviewImageUrl(scene.image)}
+                                  className="w-14 h-14 object-cover rounded flex-shrink-0 cursor-zoom-in hover:opacity-80 transition-opacity"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start">
+                                  <div className="font-bold text-blue-800">
+                                    {scene.chapter && <span>{scene.chapter}話 </span>}
+                                    {scene.page && <span className="text-gray-500 font-normal">({scene.page}p)</span>}
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <button onClick={(e) => startEditScene(scene, e)} className="p-0.5 hover:bg-gray-100 rounded">
+                                      <IconPencilSmall />
+                                    </button>
+                                    <button onClick={() => deleteScene(work.id, scene.id)} className="p-0.5 hover:bg-gray-100 rounded">
+                                      <IconTrashSmall />
+                                    </button>
+                                  </div>
+                                </div>
+                                {scene.memo && <p className="text-gray-700 mt-1 whitespace-pre-wrap">{scene.memo}</p>}
+                                {scene.tags && scene.tags.length > 0 && (
+                                  <div className="flex gap-1 flex-wrap mt-1">
+                                    {scene.tags.map((t, idx) => (
+                                      <span key={idx} className="text-[9px] bg-blue-50 text-blue-600 px-1 py-0.2 rounded">#{t}</span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* 新規Bookmark追加フォーム */}
+                      <form onSubmit={(e) => addScene(work.id, e)} className="bg-white p-2.5 rounded border flex flex-col gap-2 text-xs">
+                        <div className="font-bold text-gray-700 text-[11px]">＋ 新しいBookmarkを追加</div>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="text"
+                            placeholder="話数 (例: 12)"
+                            value={currentInput.chapter || ''}
+                            onChange={e => handleSceneInputChange(work.id, 'chapter', e.target.value)}
+                            className="flex-1 p-1.5 rounded border text-xs"
+                          />
+                          <input
+                            type="text"
+                            placeholder="ページ (例: 5)"
+                            value={currentInput.page || ''}
+                            onChange={e => handleSceneInputChange(work.id, 'page', e.target.value)}
+                            className="w-20 p-1.5 rounded border text-xs"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="タグ (カンマ区切り)"
+                          value={currentInput.tags || ''}
+                          onChange={e => handleSceneInputChange(work.id, 'tags', e.target.value)}
+                          className="w-full p-1.5 rounded border text-xs"
+                        />
+                        <textarea
+                          placeholder="名シーンのメモやセリフ"
+                          value={currentInput.memo || ''}
+                          onChange={e => handleSceneInputChange(work.id, 'memo', e.target.value)}
+                          className="w-full p-1.5 rounded border text-xs h-12"
+                        />
+                        
+                        <div className="flex items-center justify-between gap-2">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleSceneImageChange(work.id, e)} 
+                            className="p-0.5 border rounded text-[10px] bg-white flex-1 min-w-0"
+                          />
+                          <button type="submit" className="px-3 py-1.5 bg-blue-600 text-white rounded font-bold text-xs flex-shrink-0">
+                            追加
+                          </button>
+                        </div>
+                        {currentInput.image && (
+                          <div className="flex items-center gap-2">
+                            <img src={currentInput.image} alt="プレビュー" className="w-8 h-8 object-cover rounded border" />
+                            <button type="button" onClick={() => handleSceneInputChange(work.id, 'image', '')} className="text-red-500 text-[10px] underline">削除</button>
+                          </div>
+                        )}
+                      </form>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 画像拡大表示モーダル */}
+          {previewImageUrl && (
+            <div 
+              className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 cursor-pointer"
+              onClick={() => setPreviewImageUrl(null)}
+            >
+              <div className="relative max-w-full max-h-full">
+                <img src={previewImageUrl} alt="拡大表示" className="max-w-full max-h-[90vh] object-contain rounded" />
+                <p className="text-white text-center text-xs mt-2">タップで閉じる</p>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
 </html>
