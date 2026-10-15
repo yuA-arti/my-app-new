@@ -45,14 +45,11 @@
 
     const CORRECT_PASSWORD = '1234';
 
+    // さわやかなパステルカラー（ブルー、パープル、ピンク）の薄い色味
     const spineColors = [
-      'bg-amber-800 text-amber-100 border-amber-900',
-      'bg-slate-700 text-slate-100 border-slate-800',
-      'bg-emerald-800 text-emerald-100 border-emerald-900',
-      'bg-indigo-800 text-indigo-100 border-indigo-900',
-      'bg-rose-800 text-rose-100 border-rose-900',
-      'bg-teal-800 text-teal-100 border-teal-900',
-      'bg-stone-700 text-stone-100 border-stone-800',
+      'bg-sky-100 text-sky-900 border-sky-300',       // パステルブルー
+      'bg-purple-100 text-purple-900 border-purple-300', // パステルパープル
+      'bg-rose-100 text-rose-900 border-rose-300',     // パステルピンク
     ];
 
     const StarRatingDisplay = ({ rating }) => {
@@ -120,7 +117,7 @@
         } catch(e) { return []; }
       });
 
-      // マスタータグ一覧（設定で管理可能）
+      // マスタータグ一覧
       const [masterTags, setMasterTags] = useState(() => {
         try {
           const saved = localStorage.getItem('manga_master_tags');
@@ -132,6 +129,7 @@
 
       const [viewMode, setViewMode] = useState('list');
       const [shelfGenre, setShelfGenre] = useState('');
+      const [selectedWorkId, setSelectedWorkId] = useState(null); // 本棚から個別選択された作品ID
 
       const [defaultSort, setDefaultSort] = useState(() => {
         try { return localStorage.getItem('manga_default_sort') || 'rating-desc'; } catch(e) { return 'rating-desc'; }
@@ -245,7 +243,6 @@
         }
       };
 
-      // タグのトグル処理（新規登録用）
       const toggleNewTag = (tag) => {
         if (newSelectedTags.includes(tag)) {
           setNewSelectedTags(newSelectedTags.filter(t => t !== tag));
@@ -254,7 +251,6 @@
         }
       };
 
-      // タグのトグル処理（編集用）
       const toggleEditTag = (tag) => {
         const currentTags = editWorkData.tags || [];
         if (currentTags.includes(tag)) {
@@ -264,7 +260,6 @@
         }
       };
 
-      // 新規カスタムタグの追加（フォームから直接）
       const addCustomTagToNew = () => {
         const val = newCustomTag.trim();
         if (!val) return;
@@ -352,6 +347,7 @@
         e.stopPropagation();
         if (window.confirm('この作品と登録されたBookmarkをすべて削除しますか？')) {
           setWorks(works.filter(w => w.id !== id));
+          if (selectedWorkId === id) setSelectedWorkId(null);
         }
       };
 
@@ -490,7 +486,6 @@
               const parsed = JSON.parse(event.target.result);
               if (Array.isArray(parsed) && window.confirm('現在のデータを上書きして復元しますか？')) {
                 setWorks(parsed);
-                // 復元したデータに含まれるタグもマスタータグに統合
                 const restoredTags = Array.from(new Set(parsed.flatMap(w => w.tags || []).filter(Boolean)));
                 setMasterTags(prev => Array.from(new Set([...prev, ...restoredTags])));
                 alert('データを復元しました！');
@@ -511,7 +506,6 @@
         setIsSettingsOpen(false);
       };
 
-      // タグ管理用関数
       const handleAddMasterTag = () => {
         const val = newMasterTagInput.trim();
         if (!val) return;
@@ -531,8 +525,13 @@
         ...works.flatMap(w => w.tags || [])
       ]));
 
-      // 検索・フィルタリング処理（※検索時も自動展開しないようisOpenを完全分離）
+      // 検索・フィルタリング処理
       const filteredWorks = works.filter(w => {
+        // 本棚から特定の本を選択している場合はその本だけを表示
+        if (selectedWorkId !== null) {
+          return w.id === selectedWorkId;
+        }
+
         const matchWord = searchWord === '' || 
           (w.title && w.title.toLowerCase().includes(searchWord.toLowerCase())) ||
           (w.author && w.author.toLowerCase().includes(searchWord.toLowerCase())) ||
@@ -570,7 +569,9 @@
         return (w.tags || []).includes(shelfGenre);
       });
 
+      // 本棚から選んだ本「だけ」に飛ぶ処理
       const openWorkFromShelf = (workId) => {
+        setSelectedWorkId(workId);
         setViewMode('list');
         setExpandedMap(prev => ({ ...prev, [workId]: true }));
       };
@@ -612,7 +613,14 @@
             
             <div className="flex items-center gap-1.5 text-[10px] ml-auto">
               <button 
-                onClick={() => setViewMode(viewMode === 'list' ? 'shelf' : 'list')}
+                onClick={() => {
+                  if (viewMode === 'shelf') {
+                    setViewMode('list');
+                  } else {
+                    setSelectedWorkId(null); // 一覧から本棚へ移る際は絞り込み解除
+                    setViewMode('shelf');
+                  }
+                }}
                 className={`px-2.5 py-1.5 rounded font-bold whitespace-nowrap flex items-center transition-colors ${
                   viewMode === 'shelf' ? 'bg-amber-700 text-white hover:bg-amber-800' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                 }`}
@@ -666,10 +674,10 @@
                         <div
                           key={work.id}
                           onClick={() => openWorkFromShelf(work.id)}
-                          title={`${work.title}\n（クリックで作品詳細を開く）`}
+                          title={`${work.title}\n（クリックでこの作品のみを開く）`}
                           className={`w-9 sm:w-10 h-36 sm:h-40 ${colorClass} rounded-t-sm shadow-md flex flex-col justify-between items-center py-2 px-0.5 border cursor-pointer hover:-translate-y-2 hover:shadow-lg transition-transform relative select-none`}
                         >
-                          <div className="text-[8px] opacity-80 text-yellow-300 font-bold">
+                          <div className="text-[8px] text-amber-500 font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
                             {'★'.repeat(Math.min(5, Number(work.rating) || 0))}
                           </div>
                           
@@ -677,7 +685,7 @@
                             {work.title}
                           </div>
 
-                          <div className="text-[8px] opacity-70 bg-black/30 rounded px-1">
+                          <div className="text-[8px] font-semibold bg-white/70 text-gray-700 rounded px-1 shadow-xs border border-white/60">
                             {work.scenes?.length || 0}
                           </div>
                         </div>
@@ -686,525 +694,555 @@
                   )}
                 </div>
               </div>
-              <p className="text-[10px] text-stone-500 mt-2 text-center">💡 背表紙をタップすると作品の詳細とBookmarkが表示されます</p>
+              <p className="text-[10px] text-stone-500 mt-2 text-center">💡 背表紙をタップすると該当の作品のみが表示されます</p>
             </div>
           ) : (
             <>
-              {/* 検索・フィルター・並び替え */}
-              <div className="bg-white p-3 rounded-lg shadow-sm mb-3 border flex flex-col gap-2">
-                <div className="flex items-center gap-2 border rounded px-2 py-1.5 bg-white">
-                  <IconSearch />
-                  <input
-                    type="text"
-                    placeholder="フリーワード検索..."
-                    value={searchWord}
-                    onChange={e => setSearchWord(e.target.value)}
-                    className="w-full border-none outline-none text-sm"
-                  />
+              {/* 本棚から特定作品を開いた時のナビゲーションバー */}
+              {selectedWorkId !== null ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5 mb-3 flex items-center justify-between">
+                  <span className="text-xs text-blue-900 font-bold">
+                    📖 本棚から選択した作品を表示中
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setViewMode('shelf')}
+                      className="text-xs bg-white text-gray-700 border border-gray-300 px-2.5 py-1 rounded font-bold hover:bg-gray-50"
+                    >
+                      本棚へ戻る
+                    </button>
+                    <button
+                      onClick={() => setSelectedWorkId(null)}
+                      className="text-xs bg-blue-600 text-white px-2.5 py-1 rounded font-bold hover:bg-blue-700"
+                    >
+                      全作品一覧を見る
+                    </button>
+                  </div>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <select value={selectedSite} onChange={e => setSelectedSite(e.target.value)} className="w-full p-1.5 text-xs rounded border bg-white">
-                    <option value="">すべての掲載サイト</option>
-                    {allSites.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-
-                  <select value={selectedTag} onChange={e => setSelectedTag(e.target.value)} className="w-full p-1.5 text-xs rounded border bg-white">
-                    <option value="">すべてのタグ</option>
-                    {allTags.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-
-                  <select value={currentSort} onChange={e => setCurrentSort(e.target.value)} className="w-full p-1.5 text-xs rounded border bg-blue-50/60 font-medium text-blue-900 border-blue-200">
-                    <option value="rating-desc">★ 高評価順</option>
-                    <option value="rating-asc">★ 低評価順</option>
-                    <option value="date-desc">登録が最近の順</option>
-                    <option value="date-asc">登録が古い順</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* 新規作品登録フォーム */}
-              <details className="bg-white p-3 rounded-lg shadow-sm mb-3 border">
-                <summary className="font-bold cursor-pointer text-blue-600 text-sm">＋ 新しい作品を登録する</summary>
-                <form onSubmit={addWork} className="flex flex-col gap-2.5 mt-3 text-xs">
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="作品タイトル（必須）" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="flex-[2] p-2 rounded border text-sm" required />
-                    <input type="text" placeholder="著者名" value={newAuthor} onChange={e => setNewAuthor(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <div className="flex-1 flex items-center gap-1.5 border rounded px-2 bg-white">
-                      <label className="text-gray-500 font-bold whitespace-nowrap">評価:</label>
-                      <select value={newRating} onChange={e => setNewRating(e.target.value)} className="w-full py-1.5 text-xs bg-transparent outline-none font-bold text-yellow-600">
-                        <option value="5">★★★★★ (5.0)</option>
-                        <option value="4">★★★★☆ (4.0)</option>
-                        <option value="3">★★★☆☆ (3.0)</option>
-                        <option value="2">★★☆☆☆ (2.0)</option>
-                        <option value="1">★☆☆☆☆ (1.0)</option>
-                      </select>
-                    </div>
-                    <input type="text" placeholder="掲載サイト（例：ピッコマ）" value={newSite} onChange={e => setNewSite(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
-                  </div>
-
-                  {/* タグ選択UI */}
-                  <div className="flex flex-col gap-1.5 border p-2 rounded bg-gray-50">
-                    <div className="flex justify-between items-center">
-                      <span className="font-bold text-gray-700">作品タグを選択 (タップでON/OFF・複数可):</span>
-                      <span className="text-[10px] text-gray-400">{newSelectedTags.length}個選択中</span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 bg-white border rounded">
-                      {masterTags.map(tag => {
-                        const isSelected = newSelectedTags.includes(tag);
-                        return (
-                          <button
-                            type="button"
-                            key={tag}
-                            onClick={() => toggleNewTag(tag)}
-                            className={`px-2 py-0.5 rounded text-[11px] transition-colors border ${
-                              isSelected 
-                                ? 'bg-blue-600 text-white border-blue-600 font-bold shadow-xs' 
-                                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-                            }`}
-                          >
-                            {isSelected ? '✓ ' : '+ '}#{tag}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* タグ直接入力・追加 */}
-                    <div className="flex gap-1.5 mt-1">
-                      <input
-                        type="text"
-                        placeholder="新しいタグを作成して追加..."
-                        value={newCustomTag}
-                        onChange={e => setNewCustomTag(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomTagToNew(); } }}
-                        className="flex-1 p-1 rounded border text-xs bg-white"
-                      />
-                      <button 
-                        type="button" 
-                        onClick={addCustomTagToNew} 
-                        className="px-2.5 py-1 bg-gray-600 text-white rounded text-xs whitespace-nowrap hover:bg-gray-700"
-                      >
-                        タグ追加
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col gap-1">
-                    <label className="font-bold text-gray-600">表紙画像を選択 (自動圧縮):</label>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleImageChange} 
-                      className="p-1 border rounded text-xs bg-white"
+              ) : (
+                /* 検索・フィルター・並び替え */
+                <div className="bg-white p-3 rounded-lg shadow-sm mb-3 border flex flex-col gap-2">
+                  <div className="flex items-center gap-2 border rounded px-2 py-1.5 bg-white">
+                    <IconSearch />
+                    <input
+                      type="text"
+                      placeholder="フリーワード検索..."
+                      value={searchWord}
+                      onChange={e => setSearchWord(e.target.value)}
+                      className="w-full border-none outline-none text-sm"
                     />
-                    {newImage && (
-                      <div className="flex items-center gap-2 mt-1">
-                        <img src={newImage} alt="プレビュー" className="w-10 h-14 object-cover rounded border" />
-                        <button type="button" onClick={() => setNewImage('')} className="text-red-500 text-xs underline">画像を削除</button>
-                      </div>
-                    )}
                   </div>
 
-                  <textarea placeholder="作品全体のメモ" value={newWorkMemo} onChange={e => setNewWorkMemo(e.target.value)} className="p-2 rounded border h-16 text-sm" />
-                  <button type="submit" className="p-2.5 bg-blue-600 text-white rounded font-bold text-sm mt-1 hover:bg-blue-700">作品を保存</button>
-                </form>
-              </details>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <select value={selectedSite} onChange={e => setSelectedSite(e.target.value)} className="w-full p-1.5 text-xs rounded border bg-white">
+                      <option value="">すべての掲載サイト</option>
+                      {allSites.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+
+                    <select value={selectedTag} onChange={e => setSelectedTag(e.target.value)} className="w-full p-1.5 text-xs rounded border bg-white">
+                      <option value="">すべてのタグ</option>
+                      {allTags.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+
+                    <select value={currentSort} onChange={e => setCurrentSort(e.target.value)} className="w-full p-1.5 text-xs rounded border bg-blue-50/60 font-medium text-blue-900 border-blue-200">
+                      <option value="rating-desc">★ 高評価順</option>
+                      <option value="rating-asc">★ 低評価順</option>
+                      <option value="date-desc">登録が最近の順</option>
+                      <option value="date-asc">登録が古い順</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* 新規作品登録フォーム（個別選択時は折りたたんで邪魔にならないよう非表示または通常通り利用可能） */}
+              {selectedWorkId === null && (
+                <details className="bg-white p-3 rounded-lg shadow-sm mb-3 border">
+                  <summary className="font-bold cursor-pointer text-blue-600 text-sm">＋ 新しい作品を登録する</summary>
+                  <form onSubmit={addWork} className="flex flex-col gap-2.5 mt-3 text-xs">
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="作品タイトル（必須）" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="flex-[2] p-2 rounded border text-sm" required />
+                      <input type="text" placeholder="著者名" value={newAuthor} onChange={e => setNewAuthor(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <div className="flex-1 flex items-center gap-1.5 border rounded px-2 bg-white">
+                        <label className="text-gray-500 font-bold whitespace-nowrap">評価:</label>
+                        <select value={newRating} onChange={e => setNewRating(e.target.value)} className="w-full py-1.5 text-xs bg-transparent outline-none font-bold text-yellow-600">
+                          <option value="5">★★★★★ (5.0)</option>
+                          <option value="4">★★★★☆ (4.0)</option>
+                          <option value="3">★★★☆☆ (3.0)</option>
+                          <option value="2">★★☆☆☆ (2.0)</option>
+                          <option value="1">★☆☆☆☆ (1.0)</option>
+                        </select>
+                      </div>
+                      <input type="text" placeholder="掲載サイト（例：ピッコマ）" value={newSite} onChange={e => setNewSite(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
+                    </div>
+
+                    {/* タグ選択UI */}
+                    <div className="flex flex-col gap-1.5 border p-2 rounded bg-gray-50">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-gray-700">作品タグを選択 (タップでON/OFF・複数可):</span>
+                        <span className="text-[10px] text-gray-400">{newSelectedTags.length}個選択中</span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 bg-white border rounded">
+                        {masterTags.map(tag => {
+                          const isSelected = newSelectedTags.includes(tag);
+                          return (
+                            <button
+                              type="button"
+                              key={tag}
+                              onClick={() => toggleNewTag(tag)}
+                              className={`px-2 py-0.5 rounded text-[11px] transition-colors border ${
+                                isSelected 
+                                  ? 'bg-blue-600 text-white border-blue-600 font-bold shadow-xs' 
+                                  : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                              }`}
+                            >
+                              {isSelected ? '✓ ' : '+ '}#{tag}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* タグ直接入力・追加 */}
+                      <div className="flex gap-1.5 mt-1">
+                        <input
+                          type="text"
+                          placeholder="新しいタグを作成して追加..."
+                          value={newCustomTag}
+                          onChange={e => setNewCustomTag(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomTagToNew(); } }}
+                          className="flex-1 p-1 rounded border text-xs bg-white"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={addCustomTagToNew} 
+                          className="px-2.5 py-1 bg-gray-600 text-white rounded text-xs whitespace-nowrap hover:bg-gray-700"
+                        >
+                          タグ追加
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-1">
+                      <label className="font-bold text-gray-600">表紙画像を選択 (自動圧縮):</label>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageChange} 
+                        className="p-1 border rounded text-xs bg-white"
+                      />
+                      {newImage && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <img src={newImage} alt="プレビュー" className="w-10 h-14 object-cover rounded border" />
+                          <button type="button" onClick={() => setNewImage('')} className="text-red-500 text-xs underline">画像を削除</button>
+                        </div>
+                      )}
+                    </div>
+
+                    <textarea placeholder="作品全体のメモ" value={newWorkMemo} onChange={e => setNewWorkMemo(e.target.value)} className="p-2 rounded border h-16 text-sm" />
+                    <button type="submit" className="p-2.5 bg-blue-600 text-white rounded font-bold text-sm mt-1 hover:bg-blue-700">作品を保存</button>
+                  </form>
+                </details>
+              )}
 
               {/* 作品一覧 */}
               <div className="flex flex-col gap-3">
-                {filteredWorks.map(work => {
-                  // ★ご要望対応：検索中であっても自動展開せず、ユーザーがクリックした状態のみを参照
-                  const isOpen = !!expandedMap[work.id];
-                  const isEditing = editingWorkId === work.id;
-                  const isTitleExpanded = !!expandedTitles[work.id];
-                  const isMemoExpanded = !!expandedMemos[work.id];
-                  const currentInput = sceneInputs[work.id] || {};
+                {filteredWorks.length === 0 ? (
+                  <div className="bg-white p-8 rounded-lg border text-center text-gray-500 text-xs">
+                    該当する作品が見つかりません
+                  </div>
+                ) : (
+                  filteredWorks.map(work => {
+                    const isOpen = !!expandedMap[work.id];
+                    const isEditing = editingWorkId === work.id;
+                    const isTitleExpanded = !!expandedTitles[work.id];
+                    const isMemoExpanded = !!expandedMemos[work.id];
+                    const currentInput = sceneInputs[work.id] || {};
 
-                  const sceneSort = sceneSortMap[work.id] || 'chapter-asc';
-                  const sortedScenes = [...(work.scenes || [])].sort((a, b) => {
-                    if (sceneSort === 'chapter-asc') {
-                      const numA = parseFloat(a.chapter) || 0;
-                      const numB = parseFloat(b.chapter) || 0;
-                      return numA - numB;
-                    }
-                    if (sceneSort === 'date-desc') {
-                      return (new Date(b.createdAt || b.id).getTime()) - (new Date(a.createdAt || a.id).getTime());
-                    }
-                    if (sceneSort === 'date-asc') {
-                      return (new Date(a.createdAt || a.id).getTime()) - (new Date(b.createdAt || b.id).getTime());
-                    }
-                    return 0;
-                  });
+                    const sceneSort = sceneSortMap[work.id] || 'chapter-asc';
+                    const sortedScenes = [...(work.scenes || [])].sort((a, b) => {
+                      if (sceneSort === 'chapter-asc') {
+                        const numA = parseFloat(a.chapter) || 0;
+                        const numB = parseFloat(b.chapter) || 0;
+                        return numA - numB;
+                      }
+                      if (sceneSort === 'date-desc') {
+                        return (new Date(b.createdAt || b.id).getTime()) - (new Date(a.createdAt || a.id).getTime());
+                      }
+                      if (sceneSort === 'date-asc') {
+                        return (new Date(a.createdAt || a.id).getTime()) - (new Date(b.createdAt || b.id).getTime());
+                      }
+                      return 0;
+                    });
 
-                  return (
-                    <div key={work.id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
-                      
-                      {/* 作品編集モード画面 */}
-                      {isEditing ? (
-                        <form onSubmit={(e) => saveEditWork(work.id, e)} className="p-3 bg-blue-50/50 flex flex-col gap-2.5 text-xs">
-                          <h4 className="font-bold text-blue-600 mb-1">作品情報の修正</h4>
-                          <div className="flex gap-2">
-                            <input type="text" placeholder="タイトル" value={editWorkData.title} onChange={e => setEditWorkData({...editWorkData, title: e.target.value})} className="flex-[2] p-1.5 rounded border text-xs" required />
-                            <input type="text" placeholder="著者名" value={editWorkData.author} onChange={e => setEditWorkData({...editWorkData, author: e.target.value})} className="flex-1 p-1.5 rounded border text-xs" />
+                    return (
+                      <div key={work.id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                        
+                        {/* 作品編集モード画面 */}
+                        {isEditing ? (
+                          <form onSubmit={(e) => saveEditWork(work.id, e)} className="p-3 bg-blue-50/50 flex flex-col gap-2.5 text-xs">
+                            <h4 className="font-bold text-blue-600 mb-1">作品情報の修正</h4>
+                            <div className="flex gap-2">
+                              <input type="text" placeholder="タイトル" value={editWorkData.title} onChange={e => setEditWorkData({...editWorkData, title: e.target.value})} className="flex-[2] p-1.5 rounded border text-xs" required />
+                              <input type="text" placeholder="著者名" value={editWorkData.author} onChange={e => setEditWorkData({...editWorkData, author: e.target.value})} className="flex-1 p-1.5 rounded border text-xs" />
+                            </div>
+                            
+                            <div className="flex gap-2">
+                              <div className="flex-1 flex items-center gap-1.5 border rounded px-1.5 bg-white">
+                                <label className="text-gray-500 font-bold whitespace-nowrap">評価:</label>
+                                <select value={editWorkData.rating} onChange={e => setEditWorkData({...editWorkData, rating: e.target.value})} className="w-full py-1 text-xs bg-transparent outline-none font-bold text-yellow-600">
+                                  <option value="5">★★★★★ (5.0)</option>
+                                  <option value="4">★★★★☆ (4.0)</option>
+                                  <option value="3">★★★☆☆ (3.0)</option>
+                                  <option value="2">★★☆☆☆ (2.0)</option>
+                                  <option value="1">★☆☆☆☆ (1.0)</option>
+                                  <option value="0">評価なし</option>
+                                </select>
+                              </div>
+                              <input type="text" placeholder="掲載サイト" value={editWorkData.site} onChange={e => setEditWorkData({...editWorkData, site: e.target.value})} className="flex-1 p-1.5 rounded border text-xs" />
+                            </div>
+
+                            {/* 編集時のタグ選択UI */}
+                            <div className="flex flex-col gap-1.5 border p-2 rounded bg-white">
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-gray-700">タグを選択 (複数選択可能):</span>
+                                <span className="text-[10px] text-gray-400">{(editWorkData.tags || []).length}個選択中</span>
+                              </div>
+
+                              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 bg-gray-50 border rounded">
+                                {masterTags.map(tag => {
+                                  const isSelected = (editWorkData.tags || []).includes(tag);
+                                  return (
+                                    <button
+                                      type="button"
+                                      key={tag}
+                                      onClick={() => toggleEditTag(tag)}
+                                      className={`px-2 py-0.5 rounded text-[11px] transition-colors border ${
+                                        isSelected 
+                                          ? 'bg-blue-600 text-white border-blue-600 font-bold shadow-xs' 
+                                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                                      }`}
+                                    >
+                                      {isSelected ? '✓ ' : '+ '}#{tag}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="flex gap-1.5 mt-1">
+                                <input
+                                  type="text"
+                                  placeholder="新しいタグを作成..."
+                                  value={editWorkData.customTagInput || ''}
+                                  onChange={e => setEditWorkData({ ...editWorkData, customTagInput: e.target.value })}
+                                  onKeyDown={e => { 
+                                    if (e.key === 'Enter') { 
+                                      e.preventDefault(); 
+                                      addCustomTagToEdit(editWorkData.customTagInput); 
+                                      setEditWorkData(prev => ({ ...prev, customTagInput: '' }));
+                                    } 
+                                  }}
+                                  className="flex-1 p-1 rounded border text-xs bg-white"
+                                />
+                                <button 
+                                  type="button" 
+                                  onClick={() => {
+                                    addCustomTagToEdit(editWorkData.customTagInput);
+                                    setEditWorkData(prev => ({ ...prev, customTagInput: '' }));
+                                  }} 
+                                  className="px-2.5 py-1 bg-gray-600 text-white rounded text-xs whitespace-nowrap"
+                                >
+                                  追加
+                                </button>
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-col gap-1">
+                              <label className="font-bold text-gray-600">画像を変更 (自動圧縮):</label>
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleEditImageChange} 
+                                className="p-1 border rounded text-xs bg-white"
+                              />
+                              {editWorkData.image && (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <img src={editWorkData.image} alt="プレビュー" className="w-10 h-14 object-cover rounded border" />
+                                  <button type="button" onClick={() => setEditWorkData({...editWorkData, image: ''})} className="text-red-500 text-xs underline">画像を削除</button>
+                                </div>
+                              )}
+                            </div>
+
+                            <textarea placeholder="作品メモ" value={editWorkData.memo} onChange={e => setEditWorkData({...editWorkData, memo: e.target.value})} className="p-1.5 rounded border text-xs h-14" />
+                            <div className="flex justify-end gap-2 mt-1">
+                              <button type="button" onClick={() => setEditingWorkId(null)} className="px-3 py-1 bg-gray-300 text-gray-700 rounded">キャンセル</button>
+                              <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded font-bold">更新を保存</button>
+                            </div>
+                          </form>
+                        ) : (
+                          /* 通常の作品表示ヘッダー */
+                          <div 
+                            onClick={() => toggleExpand(work.id)} 
+                            className={`p-3 flex gap-3 cursor-pointer select-none active:bg-gray-50 ${isOpen ? 'border-b' : ''}`}
+                          >
+                            {/* 左側: 表紙画像 ＋ アクションボタン */}
+                            <div className="flex flex-col items-center flex-shrink-0">
+                              {work.image ? (
+                                <img 
+                                  src={work.image} 
+                                  alt={work.title} 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewImageUrl(work.image);
+                                  }}
+                                  className="w-12 h-16 object-cover rounded hover:opacity-80 transition-opacity cursor-zoom-in border" 
+                                />
+                              ) : (
+                                <div className="w-12 h-16 bg-gray-100 rounded flex items-center justify-center border border-gray-200">
+                                  <IconBook />
+                                </div>
+                              )}
+
+                              <div className="flex items-center justify-center gap-1.5 mt-1.5 bg-gray-100/90 px-1.5 py-0.5 rounded border border-gray-200">
+                                <button 
+                                  onClick={(e) => startEditWork(work, e)} 
+                                  title="作品情報を編集" 
+                                  className="p-0.5 hover:bg-gray-200 rounded"
+                                >
+                                  <IconPencil />
+                                </button>
+                                <span className="text-gray-300 text-[9px]">|</span>
+                                <button 
+                                  onClick={(e) => deleteWork(work.id, e)} 
+                                  title="作品を削除" 
+                                  className="p-0.5 hover:bg-gray-200 rounded"
+                                >
+                                  <IconTrash />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* 右側: 作品情報テキスト */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start gap-1">
+                                <div className="min-w-0 flex-1">
+                                  <h2 
+                                    onClick={(e) => toggleTitleExpand(work.id, e)}
+                                    className={`font-bold text-sm text-blue-600 hover:underline cursor-pointer ${isTitleExpanded ? 'whitespace-normal break-words' : 'truncate'}`}
+                                    title="タップで全文表示/省略"
+                                  >
+                                    {work.title}
+                                  </h2>
+                                  
+                                  <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                    {work.author && <span className="text-[11px] text-gray-500">{work.author}</span>}
+                                    {work.site && <span className="text-[10px] bg-blue-50 text-blue-600 px-1 py-0.5 rounded font-medium">{work.site}</span>}
+                                  </div>
+
+                                  <StarRatingDisplay rating={work.rating} />
+                                </div>
+                                
+                                <div className="flex items-center gap-1 flex-shrink-0 pt-0.5">
+                                  <span className="text-[10px] text-gray-400 mr-0.5">{work.scenes?.length || 0}件</span>
+                                  {isOpen ? <IconUp /> : <IconDown />}
+                                </div>
+                              </div>
+
+                              {work.memo && (
+                                <p 
+                                  onClick={(e) => toggleMemoExpand(work.id, e)}
+                                  className={`text-xs text-gray-600 mt-1 cursor-pointer ${isMemoExpanded ? 'whitespace-normal break-words' : 'line-clamp-2'}`}
+                                  title="タップで全文表示/省略"
+                                >
+                                  {work.memo}
+                                </p>
+                              )}
+
+                              {work.tags && work.tags.length > 0 && (
+                                <div className="flex gap-1 flex-wrap mt-1.5">
+                                  {work.tags.map((t, idx) => (
+                                    <span key={idx} className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">#{t}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          
-                          <div className="flex gap-2">
-                            <div className="flex-1 flex items-center gap-1.5 border rounded px-1.5 bg-white">
-                              <label className="text-gray-500 font-bold whitespace-nowrap">評価:</label>
-                              <select value={editWorkData.rating} onChange={e => setEditWorkData({...editWorkData, rating: e.target.value})} className="w-full py-1 text-xs bg-transparent outline-none font-bold text-yellow-600">
-                                <option value="5">★★★★★ (5.0)</option>
-                                <option value="4">★★★★☆ (4.0)</option>
-                                <option value="3">★★★☆☆ (3.0)</option>
-                                <option value="2">★★☆☆☆ (2.0)</option>
-                                <option value="1">★☆☆☆☆ (1.0)</option>
-                                <option value="0">評価なし</option>
+                        )}
+
+                        {/* Bookmark一覧・追加フォーム */}
+                        {isOpen && !isEditing && (
+                          <div className="bg-gray-50 p-3">
+                            <div className="flex justify-between items-center mb-2">
+                              <h3 className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                                <IconBookmark /> Bookmark ({work.scenes?.length || 0})
+                              </h3>
+                              
+                              <select 
+                                value={sceneSort} 
+                                onChange={(e) => setSceneSortMap({ ...sceneSortMap, [work.id]: e.target.value })}
+                                className="text-[10px] p-1 rounded border border-gray-300 bg-white text-gray-700"
+                              >
+                                <option value="chapter-asc">話数順 (小さい順)</option>
+                                <option value="date-desc">保存が新しい順</option>
+                                <option value="date-asc">保存が古い順</option>
                               </select>
                             </div>
-                            <input type="text" placeholder="掲載サイト" value={editWorkData.site} onChange={e => setEditWorkData({...editWorkData, site: e.target.value})} className="flex-1 p-1.5 rounded border text-xs" />
-                          </div>
 
-                          {/* 編集時のタグ選択UI */}
-                          <div className="flex flex-col gap-1.5 border p-2 rounded bg-white">
-                            <div className="flex justify-between items-center">
-                              <span className="font-bold text-gray-700">タグを選択 (複数選択可能):</span>
-                              <span className="text-[10px] text-gray-400">{(editWorkData.tags || []).length}個選択中</span>
-                            </div>
+                            <div className="flex flex-col gap-2 mb-3">
+                              {sortedScenes.map(scene => {
+                                const isSceneEditing = editingSceneId === scene.id;
 
-                            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 bg-gray-50 border rounded">
-                              {masterTags.map(tag => {
-                                const isSelected = (editWorkData.tags || []).includes(tag);
-                                return (
-                                  <button
-                                    type="button"
-                                    key={tag}
-                                    onClick={() => toggleEditTag(tag)}
-                                    className={`px-2 py-0.5 rounded text-[11px] transition-colors border ${
-                                      isSelected 
-                                        ? 'bg-blue-600 text-white border-blue-600 font-bold shadow-xs' 
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                                    }`}
-                                  >
-                                    {isSelected ? '✓ ' : '+ '}#{tag}
-                                  </button>
+                                return isSceneEditing ? (
+                                  <form key={scene.id} onSubmit={(e) => saveEditScene(work.id, scene.id, e)} className="bg-blue-50/70 border border-blue-200 p-2.5 rounded shadow-sm text-xs flex flex-col gap-1.5">
+                                    <div className="flex gap-1">
+                                      <input
+                                        type="text"
+                                        placeholder="話数"
+                                        value={editSceneData.chapter}
+                                        onChange={e => setEditSceneData({...editSceneData, chapter: e.target.value})}
+                                        className="flex-1 p-1.5 rounded border text-xs"
+                                      />
+                                      <input
+                                        type="text"
+                                        placeholder="ページ"
+                                        value={editSceneData.page}
+                                        onChange={e => setEditSceneData({...editSceneData, page: e.target.value})}
+                                        className="w-20 p-1.5 rounded border text-xs"
+                                      />
+                                    </div>
+                                    <input
+                                      type="text"
+                                      placeholder="タグ"
+                                      value={editSceneData.tags}
+                                      onChange={e => setEditSceneData({...editSceneData, tags: e.target.value})}
+                                      className="w-full p-1.5 rounded border text-xs"
+                                    />
+                                    <textarea
+                                      placeholder="名シーンのメモ"
+                                      value={editSceneData.memo}
+                                      onChange={e => setEditSceneData({...editSceneData, memo: e.target.value})}
+                                      className="w-full p-1.5 rounded border text-xs h-14"
+                                    />
+                                    
+                                    <div className="flex flex-col gap-1">
+                                      <label className="font-bold text-gray-600">画像を変更:</label>
+                                      <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        onChange={handleEditSceneImageChange} 
+                                        className="p-1 border rounded text-xs bg-white"
+                                      />
+                                      {editSceneData.image && (
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <img src={editSceneData.image} alt="プレビュー" className="w-12 h-12 object-cover rounded border" />
+                                          <button type="button" onClick={() => setEditSceneData({...editSceneData, image: ''})} className="text-red-500 text-xs underline">画像を削除</button>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 mt-1">
+                                      <button type="button" onClick={() => setEditingSceneId(null)} className="px-2.5 py-1 bg-gray-300 text-gray-700 rounded">キャンセル</button>
+                                      <button type="submit" className="px-2.5 py-1 bg-blue-600 text-white rounded font-bold">更新</button>
+                                    </div>
+                                  </form>
+                                ) : (
+                                  <div key={scene.id} className="bg-white p-2.5 rounded border shadow-sm text-xs flex gap-2.5 items-start">
+                                    {scene.image && (
+                                      <img 
+                                        src={scene.image} 
+                                        alt="Scene" 
+                                        onClick={() => setPreviewImageUrl(scene.image)}
+                                        className="w-14 h-14 object-cover rounded border flex-shrink-0 cursor-zoom-in hover:opacity-80 transition-opacity"
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex justify-between items-start">
+                                        <div className="font-bold text-blue-800 flex items-center gap-1.5">
+                                          {scene.chapter && <span>{scene.chapter}話</span>}
+                                          {scene.page && <span className="text-gray-500 font-normal">({scene.page}p)</span>}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <button onClick={(e) => startEditScene(scene, e)} className="p-0.5 hover:bg-gray-100 rounded" title="編集">
+                                            <IconPencilSmall />
+                                          </button>
+                                          <button onClick={() => deleteScene(work.id, scene.id)} className="p-0.5 hover:bg-gray-100 rounded" title="削除">
+                                            <IconTrashSmall />
+                                          </button>
+                                        </div>
+                                      </div>
+                                      {scene.memo && <p className="text-gray-700 mt-1 whitespace-pre-wrap break-words">{scene.memo}</p>}
+                                      {scene.tags && scene.tags.length > 0 && (
+                                        <div className="flex gap-1 flex-wrap mt-1">
+                                          {scene.tags.map((t, idx) => (
+                                            <span key={idx} className="text-[9px] bg-blue-50 text-blue-600 px-1 py-0.5 rounded">#{t}</span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
                                 );
                               })}
                             </div>
 
-                            <div className="flex gap-1.5 mt-1">
+                            {/* 新規Bookmark追加フォーム */}
+                            <form onSubmit={(e) => addScene(work.id, e)} className="bg-white p-2.5 rounded border flex flex-col gap-2 text-xs">
+                              <div className="font-bold text-gray-700 text-[11px]">＋ 新しいBookmarkを追加</div>
+                              <div className="flex gap-1.5">
+                                <input
+                                  type="text"
+                                  placeholder="話数 (例: 12)"
+                                  value={currentInput.chapter || ''}
+                                  onChange={e => handleSceneInputChange(work.id, 'chapter', e.target.value)}
+                                  className="flex-1 p-1.5 rounded border text-xs"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="ページ (例: 5)"
+                                  value={currentInput.page || ''}
+                                  onChange={e => handleSceneInputChange(work.id, 'page', e.target.value)}
+                                  className="w-20 p-1.5 rounded border text-xs"
+                                />
+                              </div>
                               <input
                                 type="text"
-                                placeholder="新しいタグを作成..."
-                                value={editWorkData.customTagInput || ''}
-                                onChange={e => setEditWorkData({ ...editWorkData, customTagInput: e.target.value })}
-                                onKeyDown={e => { 
-                                  if (e.key === 'Enter') { 
-                                    e.preventDefault(); 
-                                    addCustomTagToEdit(editWorkData.customTagInput); 
-                                    setEditWorkData(prev => ({ ...prev, customTagInput: '' }));
-                                  } 
-                                }}
-                                className="flex-1 p-1 rounded border text-xs bg-white"
+                                placeholder="タグ (カンマ区切り)"
+                                value={currentInput.tags || ''}
+                                onChange={e => handleSceneInputChange(work.id, 'tags', e.target.value)}
+                                className="w-full p-1.5 rounded border text-xs"
                               />
-                              <button 
-                                type="button" 
-                                onClick={() => {
-                                  addCustomTagToEdit(editWorkData.customTagInput);
-                                  setEditWorkData(prev => ({ ...prev, customTagInput: '' }));
-                                }} 
-                                className="px-2.5 py-1 bg-gray-600 text-white rounded text-xs whitespace-nowrap"
-                              >
-                                追加
-                              </button>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-col gap-1">
-                            <label className="font-bold text-gray-600">画像を変更 (自動圧縮):</label>
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              onChange={handleEditImageChange} 
-                              className="p-1 border rounded text-xs bg-white"
-                            />
-                            {editWorkData.image && (
-                              <div className="flex items-center gap-2 mt-1">
-                                <img src={editWorkData.image} alt="プレビュー" className="w-10 h-14 object-cover rounded border" />
-                                <button type="button" onClick={() => setEditWorkData({...editWorkData, image: ''})} className="text-red-500 text-xs underline">画像を削除</button>
-                              </div>
-                            )}
-                          </div>
-
-                          <textarea placeholder="作品メモ" value={editWorkData.memo} onChange={e => setEditWorkData({...editWorkData, memo: e.target.value})} className="p-1.5 rounded border text-xs h-14" />
-                          <div className="flex justify-end gap-2 mt-1">
-                            <button type="button" onClick={() => setEditingWorkId(null)} className="px-3 py-1 bg-gray-300 text-gray-700 rounded">キャンセル</button>
-                            <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded font-bold">更新を保存</button>
-                          </div>
-                        </form>
-                      ) : (
-                        /* 通常の作品表示ヘッダー */
-                        <div 
-                          onClick={() => toggleExpand(work.id)} 
-                          className={`p-3 flex gap-3 cursor-pointer select-none active:bg-gray-50 ${isOpen ? 'border-b' : ''}`}
-                        >
-                          {/* 左側: 表紙画像 ＋ 誤爆防止アクションボタン */}
-                          <div className="flex flex-col items-center flex-shrink-0">
-                            {work.image ? (
-                              <img 
-                                src={work.image} 
-                                alt={work.title} 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setPreviewImageUrl(work.image);
-                                }}
-                                className="w-12 h-16 object-cover rounded hover:opacity-80 transition-opacity cursor-zoom-in border" 
+                              <textarea
+                                placeholder="名シーンのメモやセリフ"
+                                value={currentInput.memo || ''}
+                                onChange={e => handleSceneInputChange(work.id, 'memo', e.target.value)}
+                                className="w-full p-1.5 rounded border text-xs h-12"
                               />
-                            ) : (
-                              <div className="w-12 h-16 bg-gray-100 rounded flex items-center justify-center border border-gray-200">
-                                <IconBook />
-                              </div>
-                            )}
-
-                            <div className="flex items-center justify-center gap-1.5 mt-1.5 bg-gray-100/90 px-1.5 py-0.5 rounded border border-gray-200">
-                              <button 
-                                onClick={(e) => startEditWork(work, e)} 
-                                title="作品情報を編集" 
-                                className="p-0.5 hover:bg-gray-200 rounded"
-                              >
-                                <IconPencil />
-                              </button>
-                              <span className="text-gray-300 text-[9px]">|</span>
-                              <button 
-                                onClick={(e) => deleteWork(work.id, e)} 
-                                title="作品を削除" 
-                                className="p-0.5 hover:bg-gray-200 rounded"
-                              >
-                                <IconTrash />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* 右側: 作品情報テキスト */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start gap-1">
-                              <div className="min-w-0 flex-1">
-                                <h2 
-                                  onClick={(e) => toggleTitleExpand(work.id, e)}
-                                  className={`font-bold text-sm text-blue-600 hover:underline cursor-pointer ${isTitleExpanded ? 'whitespace-normal break-words' : 'truncate'}`}
-                                  title="タップで全文表示/省略"
-                                >
-                                  {work.title}
-                                </h2>
-                                
-                                <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                                  {work.author && <span className="text-[11px] text-gray-500">{work.author}</span>}
-                                  {work.site && <span className="text-[10px] bg-blue-50 text-blue-600 px-1 py-0.5 rounded font-medium">{work.site}</span>}
-                                </div>
-
-                                <StarRatingDisplay rating={work.rating} />
-                              </div>
                               
-                              <div className="flex items-center gap-1 flex-shrink-0 pt-0.5">
-                                <span className="text-[10px] text-gray-400 mr-0.5">{work.scenes?.length || 0}件</span>
-                                {isOpen ? <IconUp /> : <IconDown />}
+                              <div className="flex items-center justify-between gap-2">
+                                <input 
+                                  type="file" 
+                                  accept="image/*" 
+                                  onChange={(e) => handleSceneImageChange(work.id, e)} 
+                                  className="p-0.5 border rounded text-[10px] bg-white flex-1 min-w-0"
+                                />
+                                <button type="submit" className="px-3 py-1.5 bg-blue-600 text-white rounded font-bold text-xs flex-shrink-0 hover:bg-blue-700">
+                                  追加
+                                </button>
                               </div>
-                            </div>
-
-                            {work.memo && (
-                              <p 
-                                onClick={(e) => toggleMemoExpand(work.id, e)}
-                                className={`text-xs text-gray-600 mt-1 cursor-pointer ${isMemoExpanded ? 'whitespace-normal break-words' : 'line-clamp-2'}`}
-                                title="タップで全文表示/省略"
-                              >
-                                {work.memo}
-                              </p>
-                            )}
-
-                            {work.tags && work.tags.length > 0 && (
-                              <div className="flex gap-1 flex-wrap mt-1.5">
-                                {work.tags.map((t, idx) => (
-                                  <span key={idx} className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">#{t}</span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Bookmark一覧・追加フォーム */}
-                      {isOpen && !isEditing && (
-                        <div className="bg-gray-50 p-3">
-                          <div className="flex justify-between items-center mb-2">
-                            <h3 className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                              <IconBookmark /> Bookmark ({work.scenes?.length || 0})
-                            </h3>
-                            
-                            <select 
-                              value={sceneSort} 
-                              onChange={(e) => setSceneSortMap({ ...sceneSortMap, [work.id]: e.target.value })}
-                              className="text-[10px] p-1 rounded border border-gray-300 bg-white text-gray-700"
-                            >
-                              <option value="chapter-asc">話数順 (小さい順)</option>
-                              <option value="date-desc">保存が新しい順</option>
-                              <option value="date-asc">保存が古い順</option>
-                            </select>
-                          </div>
-
-                          <div className="flex flex-col gap-2 mb-3">
-                            {sortedScenes.map(scene => {
-                              const isSceneEditing = editingSceneId === scene.id;
-
-                              return isSceneEditing ? (
-                                <form key={scene.id} onSubmit={(e) => saveEditScene(work.id, scene.id, e)} className="bg-blue-50/70 border border-blue-200 p-2.5 rounded shadow-sm text-xs flex flex-col gap-1.5">
-                                  <div className="flex gap-1">
-                                    <input
-                                      type="text"
-                                      placeholder="話数"
-                                      value={editSceneData.chapter}
-                                      onChange={e => setEditSceneData({...editSceneData, chapter: e.target.value})}
-                                      className="flex-1 p-1.5 rounded border text-xs"
-                                    />
-                                    <input
-                                      type="text"
-                                      placeholder="ページ"
-                                      value={editSceneData.page}
-                                      onChange={e => setEditSceneData({...editSceneData, page: e.target.value})}
-                                      className="w-20 p-1.5 rounded border text-xs"
-                                    />
-                                  </div>
-                                  <input
-                                    type="text"
-                                    placeholder="タグ"
-                                    value={editSceneData.tags}
-                                    onChange={e => setEditSceneData({...editSceneData, tags: e.target.value})}
-                                    className="w-full p-1.5 rounded border text-xs"
-                                  />
-                                  <textarea
-                                    placeholder="名シーンのメモ"
-                                    value={editSceneData.memo}
-                                    onChange={e => setEditSceneData({...editSceneData, memo: e.target.value})}
-                                    className="w-full p-1.5 rounded border text-xs h-14"
-                                  />
-                                  
-                                  <div className="flex flex-col gap-1">
-                                    <label className="font-bold text-gray-600">画像を変更:</label>
-                                    <input 
-                                      type="file" 
-                                      accept="image/*" 
-                                      onChange={handleEditSceneImageChange} 
-                                      className="p-1 border rounded text-xs bg-white"
-                                    />
-                                    {editSceneData.image && (
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <img src={editSceneData.image} alt="プレビュー" className="w-12 h-12 object-cover rounded border" />
-                                        <button type="button" onClick={() => setEditSceneData({...editSceneData, image: ''})} className="text-red-500 text-xs underline">画像を削除</button>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div className="flex justify-end gap-2 mt-1">
-                                    <button type="button" onClick={() => setEditingSceneId(null)} className="px-2.5 py-1 bg-gray-300 text-gray-700 rounded">キャンセル</button>
-                                    <button type="submit" className="px-2.5 py-1 bg-blue-600 text-white rounded font-bold">更新</button>
-                                  </div>
-                                </form>
-                              ) : (
-                                <div key={scene.id} className="bg-white p-2.5 rounded border shadow-sm text-xs flex gap-2.5 items-start">
-                                  {scene.image && (
-                                    <img 
-                                      src={scene.image} 
-                                      alt="Scene" 
-                                      onClick={() => setPreviewImageUrl(scene.image)}
-                                      className="w-14 h-14 object-cover rounded border flex-shrink-0 cursor-zoom-in hover:opacity-80 transition-opacity"
-                                    />
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start">
-                                      <div className="font-bold text-blue-800 flex items-center gap-1.5">
-                                        {scene.chapter && <span>{scene.chapter}話</span>}
-                                        {scene.page && <span className="text-gray-500 font-normal">({scene.page}p)</span>}
-                                      </div>
-                                      <div className="flex items-center gap-1">
-                                        <button onClick={(e) => startEditScene(scene, e)} className="p-0.5 hover:bg-gray-100 rounded" title="編集">
-                                          <IconPencilSmall />
-                                        </button>
-                                        <button onClick={() => deleteScene(work.id, scene.id, e)} className="p-0.5 hover:bg-gray-100 rounded" title="削除">
-                                          <IconTrashSmall />
-                                        </button>
-                                      </div>
-                                    </div>
-                                    {scene.memo && <p className="text-gray-700 mt-1 whitespace-pre-wrap break-words">{scene.memo}</p>}
-                                    {scene.tags && scene.tags.length > 0 && (
-                                      <div className="flex gap-1 flex-wrap mt-1">
-                                        {scene.tags.map((t, idx) => (
-                                          <span key={idx} className="text-[9px] bg-blue-50 text-blue-600 px-1 py-0.5 rounded">#{t}</span>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
+                              {currentInput.image && (
+                                <div className="flex items-center gap-2">
+                                  <img src={currentInput.image} alt="プレビュー" className="w-8 h-8 object-cover rounded border" />
+                                  <button type="button" onClick={() => handleSceneInputChange(work.id, 'image', '')} className="text-red-500 text-[10px] underline">削除</button>
                                 </div>
-                              );
-                            })}
+                              )}
+                            </form>
                           </div>
-
-                          {/* 新規Bookmark追加フォーム */}
-                          <form onSubmit={(e) => addScene(work.id, e)} className="bg-white p-2.5 rounded border flex flex-col gap-2 text-xs">
-                            <div className="font-bold text-gray-700 text-[11px]">＋ 新しいBookmarkを追加</div>
-                            <div className="flex gap-1.5">
-                              <input
-                                type="text"
-                                placeholder="話数 (例: 12)"
-                                value={currentInput.chapter || ''}
-                                onChange={e => handleSceneInputChange(work.id, 'chapter', e.target.value)}
-                                className="flex-1 p-1.5 rounded border text-xs"
-                              />
-                              <input
-                                type="text"
-                                placeholder="ページ (例: 5)"
-                                value={currentInput.page || ''}
-                                onChange={e => handleSceneInputChange(work.id, 'page', e.target.value)}
-                                className="w-20 p-1.5 rounded border text-xs"
-                              />
-                            </div>
-                            <input
-                              type="text"
-                              placeholder="タグ (カンマ区切り)"
-                              value={currentInput.tags || ''}
-                              onChange={e => handleSceneInputChange(work.id, 'tags', e.target.value)}
-                              className="w-full p-1.5 rounded border text-xs"
-                            />
-                            <textarea
-                              placeholder="名シーンのメモやセリフ"
-                              value={currentInput.memo || ''}
-                              onChange={e => handleSceneInputChange(work.id, 'memo', e.target.value)}
-                              className="w-full p-1.5 rounded border text-xs h-12"
-                            />
-                            
-                            <div className="flex items-center justify-between gap-2">
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                onChange={(e) => handleSceneImageChange(work.id, e)} 
-                                className="p-0.5 border rounded text-[10px] bg-white flex-1 min-w-0"
-                              />
-                              <button type="submit" className="px-3 py-1.5 bg-blue-600 text-white rounded font-bold text-xs flex-shrink-0 hover:bg-blue-700">
-                                追加
-                              </button>
-                            </div>
-                            {currentInput.image && (
-                              <div className="flex items-center gap-2">
-                                <img src={currentInput.image} alt="プレビュー" className="w-8 h-8 object-cover rounded border" />
-                                <button type="button" onClick={() => handleSceneInputChange(work.id, 'image', '')} className="text-red-500 text-[10px] underline">削除</button>
-                              </div>
-                            )}
-                          </form>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </>
           )}
