@@ -47,9 +47,9 @@
 
     // さわやかなパステルカラー（ブルー、パープル、ピンク）の薄い色味
     const spineColors = [
-      'bg-sky-100 text-sky-900 border-sky-300',       // パステルブルー
-      'bg-purple-100 text-purple-900 border-purple-300', // パステルパープル
-      'bg-rose-100 text-rose-900 border-rose-300',     // パステルピンク
+      'bg-sky-100 text-sky-900 border-sky-300',
+      'bg-purple-100 text-purple-900 border-purple-300',
+      'bg-rose-100 text-rose-900 border-rose-300',
     ];
 
     const StarRatingDisplay = ({ rating }) => {
@@ -117,18 +117,28 @@
         } catch(e) { return []; }
       });
 
+      // ジャンル一覧（設定で管理可能）
+      const [masterGenres, setMasterGenres] = useState(() => {
+        try {
+          const saved = localStorage.getItem('manga_master_genres');
+          if (saved) return JSON.parse(saved);
+          return ['ファンタジー', 'アクション', '恋愛', 'サバイバル', '日常', 'SF・ミステリー', 'コメディ', 'ホラー', 'その他'];
+        } catch(e) { return []; }
+      });
+      const [newMasterGenreInput, setNewMasterGenreInput] = useState('');
+
       // マスタータグ一覧
       const [masterTags, setMasterTags] = useState(() => {
         try {
           const saved = localStorage.getItem('manga_master_tags');
           if (saved) return JSON.parse(saved);
-          return ['絵が綺麗', '主人公が魅力的', 'サバイバル', 'ファンタジー', 'アクション', 'かっこいい', '恋愛', '日常'];
+          return ['絵が綺麗', '主人公が魅力的', '名言', '感動', '名バトル', '伏線回収', 'ギャグ', '切ない'];
         } catch(e) { return []; }
       });
       const [newMasterTagInput, setNewMasterTagInput] = useState('');
 
       const [viewMode, setViewMode] = useState('list');
-      const [shelfGenre, setShelfGenre] = useState('');
+      const [shelfGenreFilter, setShelfGenreFilter] = useState(''); // 本棚画面での絞り込みフィルター（空の場合は全ジャンル棚表示）
       const [selectedWorkId, setSelectedWorkId] = useState(null); // 本棚から個別選択された作品ID
 
       const [defaultSort, setDefaultSort] = useState(() => {
@@ -142,6 +152,7 @@
       const [sceneSortMap, setSceneSortMap] = useState({});
 
       const [searchWord, setSearchWord] = useState('');
+      const [selectedGenre, setSelectedGenre] = useState('');
       const [selectedTag, setSelectedTag] = useState('');
       const [selectedSite, setSelectedSite] = useState('');
 
@@ -152,6 +163,7 @@
       // 新規登録用フォーム状態
       const [newTitle, setNewTitle] = useState('');
       const [newAuthor, setNewAuthor] = useState('');
+      const [newGenre, setNewGenre] = useState('');
       const [newRating, setNewRating] = useState('5');
       const [newImage, setNewImage] = useState('');
       const [newSite, setNewSite] = useState('');
@@ -163,9 +175,12 @@
       const [editingWorkId, setEditingWorkId] = useState(null);
       const [editWorkData, setEditWorkData] = useState({});
 
+      // Bookmark入力フォーム状態
       const [sceneInputs, setSceneInputs] = useState({});
+      const [sceneCustomTagMap, setSceneCustomTagMap] = useState({});
       const [editingSceneId, setEditingSceneId] = useState(null);
       const [editSceneData, setEditSceneData] = useState({});
+      const [editSceneCustomTag, setEditSceneCustomTag] = useState('');
       const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
       const fileInputRef = useRef(null);
@@ -177,6 +192,12 @@
           alert('保存容量の上限を超えた可能性があります。古い画像を削除するかバックアップを取ってください。');
         }
       }, [works]);
+
+      useEffect(() => {
+        try {
+          localStorage.setItem('manga_master_genres', JSON.stringify(masterGenres));
+        } catch(e) {}
+      }, [masterGenres]);
 
       useEffect(() => {
         try {
@@ -243,21 +264,71 @@
         }
       };
 
-      const toggleNewTag = (tag) => {
-        if (newSelectedTags.includes(tag)) {
-          setNewSelectedTags(newSelectedTags.filter(t => t !== tag));
+      // タグ選択のトグル
+      const toggleTagInList = (currentList, tag) => {
+        if (currentList.includes(tag)) {
+          return currentList.filter(t => t !== tag);
         } else {
-          setNewSelectedTags([...newSelectedTags, tag]);
+          return [...currentList, tag];
         }
+      };
+
+      const toggleNewTag = (tag) => {
+        setNewSelectedTags(prev => toggleTagInList(prev, tag));
       };
 
       const toggleEditTag = (tag) => {
         const currentTags = editWorkData.tags || [];
-        if (currentTags.includes(tag)) {
-          setEditWorkData({ ...editWorkData, tags: currentTags.filter(t => t !== tag) });
-        } else {
-          setEditWorkData({ ...editWorkData, tags: [...currentTags, tag] });
+        setEditWorkData({ ...editWorkData, tags: toggleTagInList(currentTags, tag) });
+      };
+
+      // Bookmark作成フォーム用のタグトグル
+      const toggleSceneTag = (workId, tag) => {
+        const currentInput = sceneInputs[workId] || {};
+        const currentTags = currentInput.tags || [];
+        const nextTags = toggleTagInList(currentTags, tag);
+        setSceneInputs(prev => ({
+          ...prev,
+          [workId]: { ...(prev[workId] || {}), tags: nextTags }
+        }));
+      };
+
+      // Bookmark作成フォーム用カスタムタグ追加
+      const addSceneCustomTag = (workId) => {
+        const val = (sceneCustomTagMap[workId] || '').trim();
+        if (!val) return;
+        if (!masterTags.includes(val)) {
+          setMasterTags(prev => [...prev, val]);
         }
+        const currentInput = sceneInputs[workId] || {};
+        const currentTags = currentInput.tags || [];
+        if (!currentTags.includes(val)) {
+          setSceneInputs(prev => ({
+            ...prev,
+            [workId]: { ...(prev[workId] || {}), tags: [...currentTags, val] }
+          }));
+        }
+        setSceneCustomTagMap(prev => ({ ...prev, [workId]: '' }));
+      };
+
+      // Bookmark編集用のタグトグル
+      const toggleEditSceneTag = (tag) => {
+        const currentTags = editSceneData.tags || [];
+        setEditSceneData({ ...editSceneData, tags: toggleTagInList(currentTags, tag) });
+      };
+
+      // Bookmark編集用のカスタムタグ追加
+      const addEditSceneCustomTag = () => {
+        const val = editSceneCustomTag.trim();
+        if (!val) return;
+        if (!masterTags.includes(val)) {
+          setMasterTags(prev => [...prev, val]);
+        }
+        const currentTags = editSceneData.tags || [];
+        if (!currentTags.includes(val)) {
+          setEditSceneData({ ...editSceneData, tags: [...currentTags, val] });
+        }
+        setEditSceneCustomTag('');
       };
 
       const addCustomTagToNew = () => {
@@ -292,6 +363,7 @@
           id: newId,
           title: newTitle,
           author: newAuthor,
+          genre: newGenre,
           rating: Number(newRating) || 5,
           image: newImage,
           site: newSite,
@@ -302,7 +374,7 @@
         };
         setWorks([item, ...works]);
         setExpandedMap(prev => ({ ...prev, [newId]: true }));
-        setNewTitle(''); setNewAuthor(''); setNewRating('5'); setNewImage(''); setNewSite(''); setNewSelectedTags([]); setNewCustomTag(''); setNewWorkMemo('');
+        setNewTitle(''); setNewAuthor(''); setNewGenre(''); setNewRating('5'); setNewImage(''); setNewSite(''); setNewSelectedTags([]); setNewCustomTag(''); setNewWorkMemo('');
       };
 
       const startEditWork = (work, e) => {
@@ -311,6 +383,7 @@
         setEditWorkData({
           title: work.title || '',
           author: work.author || '',
+          genre: work.genre || '',
           rating: work.rating !== undefined ? String(work.rating) : '5',
           site: work.site || '',
           image: work.image || '',
@@ -331,6 +404,7 @@
               ...w,
               title: editWorkData.title,
               author: editWorkData.author,
+              genre: editWorkData.genre,
               rating: Number(editWorkData.rating) || 0,
               site: editWorkData.site,
               image: editWorkData.image,
@@ -377,7 +451,7 @@
           page: input.page || '',
           memo: input.memo || '',
           image: input.image || '',
-          tags: input.tags ? input.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+          tags: Array.isArray(input.tags) ? input.tags : (input.tags ? String(input.tags).split(',').map(t => t.trim()).filter(Boolean) : []),
           createdAt: new Date().toISOString()
         };
 
@@ -388,7 +462,7 @@
           return w;
         }));
 
-        setSceneInputs({ ...sceneInputs, [workId]: { chapter: '', page: '', memo: '', image: '', tags: '' } });
+        setSceneInputs({ ...sceneInputs, [workId]: { chapter: '', page: '', memo: '', image: '', tags: [] } });
       };
 
       const startEditScene = (scene, e) => {
@@ -399,8 +473,9 @@
           page: scene.page || '',
           memo: scene.memo || '',
           image: scene.image || '',
-          tags: (scene.tags || []).join(', ')
+          tags: scene.tags || []
         });
+        setEditSceneCustomTag('');
       };
 
       const saveEditScene = (workId, sceneId, e) => {
@@ -419,7 +494,7 @@
                     page: editSceneData.page,
                     memo: editSceneData.memo,
                     image: editSceneData.image,
-                    tags: editSceneData.tags ? editSceneData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+                    tags: editSceneData.tags || []
                   };
                 }
                 return s;
@@ -486,8 +561,15 @@
               const parsed = JSON.parse(event.target.result);
               if (Array.isArray(parsed) && window.confirm('現在のデータを上書きして復元しますか？')) {
                 setWorks(parsed);
-                const restoredTags = Array.from(new Set(parsed.flatMap(w => w.tags || []).filter(Boolean)));
+                const restoredTags = Array.from(new Set(parsed.flatMap(w => [
+                  ...(w.tags || []),
+                  ...(w.scenes || []).flatMap(s => s.tags || [])
+                ]).filter(Boolean)));
                 setMasterTags(prev => Array.from(new Set([...prev, ...restoredTags])));
+                
+                const restoredGenres = Array.from(new Set(parsed.map(w => w.genre).filter(Boolean)));
+                setMasterGenres(prev => Array.from(new Set([...prev, ...restoredGenres])));
+
                 alert('データを復元しました！');
               }
             } catch(err) {
@@ -506,6 +588,7 @@
         setIsSettingsOpen(false);
       };
 
+      // タグ・ジャンル管理関数
       const handleAddMasterTag = () => {
         const val = newMasterTagInput.trim();
         if (!val) return;
@@ -519,15 +602,31 @@
         setMasterTags(masterTags.filter(t => t !== tagToDelete));
       };
 
+      const handleAddMasterGenre = () => {
+        const val = newMasterGenreInput.trim();
+        if (!val) return;
+        if (!masterGenres.includes(val)) {
+          setMasterGenres([...masterGenres, val]);
+        }
+        setNewMasterGenreInput('');
+      };
+
+      const handleDeleteMasterGenre = (genreToDelete) => {
+        setMasterGenres(masterGenres.filter(g => g !== genreToDelete));
+      };
+
       const allSites = Array.from(new Set(works.map(w => w.site).filter(Boolean)));
+      const allGenres = Array.from(new Set([...masterGenres, ...works.map(w => w.genre).filter(Boolean)]));
       const allTags = Array.from(new Set([
         ...masterTags,
-        ...works.flatMap(w => w.tags || [])
+        ...works.flatMap(w => [
+          ...(w.tags || []),
+          ...(w.scenes || []).flatMap(s => s.tags || [])
+        ])
       ]));
 
       // 検索・フィルタリング処理
       const filteredWorks = works.filter(w => {
-        // 本棚から特定の本を選択している場合はその本だけを表示
         if (selectedWorkId !== null) {
           return w.id === selectedWorkId;
         }
@@ -538,13 +637,14 @@
           (w.memo && w.memo.toLowerCase().includes(searchWord.toLowerCase())) ||
           (w.scenes && w.scenes.some(s => s.memo && s.memo.toLowerCase().includes(searchWord.toLowerCase())));
 
+        const matchGenre = selectedGenre === '' || w.genre === selectedGenre;
         const matchSite = selectedSite === '' || w.site === selectedSite;
 
         const matchTag = selectedTag === '' || 
           (w.tags && w.tags.includes(selectedTag)) ||
           (w.scenes && w.scenes.some(s => s.tags && s.tags.includes(selectedTag)));
 
-        return matchWord && matchSite && matchTag;
+        return matchWord && matchGenre && matchSite && matchTag;
       }).sort((a, b) => {
         const rA = a.rating !== undefined ? Number(a.rating) : 0;
         const rB = b.rating !== undefined ? Number(b.rating) : 0;
@@ -564,12 +664,24 @@
         return 0;
       });
 
-      const shelfWorks = works.filter(w => {
-        if (!shelfGenre) return true;
-        return (w.tags || []).includes(shelfGenre);
-      });
+      // 本棚表示用のジャンル別グループ化処理
+      const shelfGenreGroups = () => {
+        // 表示対象のジャンルリスト
+        const targetGenres = shelfGenreFilter 
+          ? [shelfGenreFilter] 
+          : [...allGenres, '未分類'];
 
-      // 本棚から選んだ本「だけ」に飛ぶ処理
+        return targetGenres.map(genre => {
+          const list = works.filter(w => {
+            if (genre === '未分類') {
+              return !w.genre || w.genre === '';
+            }
+            return w.genre === genre;
+          });
+          return { genre, works: list };
+        }).filter(group => group.works.length > 0 || shelfGenreFilter !== '');
+      };
+
       const openWorkFromShelf = (workId) => {
         setSelectedWorkId(workId);
         setViewMode('list');
@@ -617,7 +729,7 @@
                   if (viewMode === 'shelf') {
                     setViewMode('list');
                   } else {
-                    setSelectedWorkId(null); // 一覧から本棚へ移る際は絞り込み解除
+                    setSelectedWorkId(null);
                     setViewMode('shelf');
                   }
                 }}
@@ -641,60 +753,83 @@
             </div>
           </div>
 
-          {/* 本棚表示モード */}
+          {/* 本棚表示モード（ジャンルごとに棚を分けて表示） */}
           {viewMode === 'shelf' ? (
             <div className="bg-stone-100 rounded-xl p-3 shadow-inner border border-stone-300">
               <div className="flex items-center justify-between mb-3 border-b border-stone-300 pb-2">
                 <div className="text-xs font-bold text-stone-800 flex items-center gap-1">
                   <span>📚 マイ本棚</span>
                   <span className="text-[10px] bg-stone-300 text-stone-700 px-1.5 py-0.5 rounded-full">
-                    {shelfWorks.length}冊
+                    {works.length}冊
                   </span>
                 </div>
                 <select 
-                  value={shelfGenre} 
-                  onChange={e => setShelfGenre(e.target.value)} 
+                  value={shelfGenreFilter} 
+                  onChange={e => setShelfGenreFilter(e.target.value)} 
                   className="p-1 text-xs rounded border border-stone-300 bg-white"
                 >
-                  <option value="">すべてのジャンル</option>
-                  {allTags.map(tag => (
-                    <option key={tag} value={tag}>{tag}</option>
+                  <option value="">すべてのジャンル棚を表示</option>
+                  {allGenres.map(g => (
+                    <option key={g} value={g}>{g}</option>
                   ))}
                 </select>
               </div>
 
-              <div className="bg-amber-950/20 p-3 rounded-lg border-2 border-amber-900/40">
-                <div className="flex flex-wrap items-end gap-1.5 min-h-[170px] border-b-8 border-amber-900 pb-1 px-1">
-                  {shelfWorks.length === 0 ? (
-                    <p className="text-xs text-stone-500 m-auto py-8">該当する作品がありません</p>
-                  ) : (
-                    shelfWorks.map((work, idx) => {
-                      const colorClass = spineColors[idx % spineColors.length];
-                      return (
-                        <div
-                          key={work.id}
-                          onClick={() => openWorkFromShelf(work.id)}
-                          title={`${work.title}\n（クリックでこの作品のみを開く）`}
-                          className={`w-9 sm:w-10 h-36 sm:h-40 ${colorClass} rounded-t-sm shadow-md flex flex-col justify-between items-center py-2 px-0.5 border cursor-pointer hover:-translate-y-2 hover:shadow-lg transition-transform relative select-none`}
-                        >
-                          <div className="text-[8px] text-amber-500 font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
-                            {'★'.repeat(Math.min(5, Number(work.rating) || 0))}
-                          </div>
-                          
-                          <div className="vertical-text text-[10px] sm:text-[11px] font-bold leading-none tracking-wider overflow-hidden max-h-24 text-center">
-                            {work.title}
-                          </div>
+              {/* ジャンルごとの棚 */}
+              <div className="flex flex-col gap-5">
+                {shelfGenreGroups().length === 0 ? (
+                  <div className="bg-amber-950/20 p-6 rounded-lg text-center text-xs text-stone-500">
+                    本棚に作品がありません
+                  </div>
+                ) : (
+                  shelfGenreGroups().map(group => (
+                    <div key={group.genre} className="bg-amber-950/15 p-2.5 sm:p-3 rounded-lg border-2 border-amber-900/30">
+                      {/* 棚のジャンル見出し */}
+                      <div className="flex items-center justify-between mb-2 px-1">
+                        <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                          <span className="inline-block w-2 h-2 rounded-full bg-amber-700"></span>
+                          {group.genre}
+                        </span>
+                        <span className="text-[10px] text-amber-900/80 font-semibold bg-amber-100/80 px-1.5 py-0.2 rounded border border-amber-300">
+                          {group.works.length}冊
+                        </span>
+                      </div>
 
-                          <div className="text-[8px] font-semibold bg-white/70 text-gray-700 rounded px-1 shadow-xs border border-white/60">
-                            {work.scenes?.length || 0}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+                      {/* 本の並び（木製風の棚板） */}
+                      <div className="flex flex-wrap items-end gap-1.5 min-h-[170px] border-b-8 border-amber-900 pb-1 px-1">
+                        {group.works.length === 0 ? (
+                          <p className="text-[11px] text-stone-400 m-auto py-6">この棚には作品がありません</p>
+                        ) : (
+                          group.works.map((work, idx) => {
+                            const colorClass = spineColors[idx % spineColors.length];
+                            return (
+                              <div
+                                key={work.id}
+                                onClick={() => openWorkFromShelf(work.id)}
+                                title={`${work.title}\nジャンル: ${work.genre || '未設定'}\n（クリックでこの作品のみを開く）`}
+                                className={`w-9 sm:w-10 h-36 sm:h-40 ${colorClass} rounded-t-sm shadow-md flex flex-col justify-between items-center py-2 px-0.5 border cursor-pointer hover:-translate-y-2 hover:shadow-lg transition-transform relative select-none`}
+                              >
+                                <div className="text-[8px] text-amber-500 font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
+                                  {'★'.repeat(Math.min(5, Number(work.rating) || 0))}
+                                </div>
+                                
+                                <div className="vertical-text text-[10px] sm:text-[11px] font-bold leading-none tracking-wider overflow-hidden max-h-24 text-center">
+                                  {work.title}
+                                </div>
+
+                                <div className="text-[8px] font-semibold bg-white/70 text-gray-700 rounded px-1 shadow-xs border border-white/60">
+                                  {work.scenes?.length || 0}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-              <p className="text-[10px] text-stone-500 mt-2 text-center">💡 背表紙をタップすると該当の作品のみが表示されます</p>
+              <p className="text-[10px] text-stone-500 mt-3 text-center">💡 背表紙をタップすると該当の作品のみが表示されます</p>
             </div>
           ) : (
             <>
@@ -726,14 +861,19 @@
                     <IconSearch />
                     <input
                       type="text"
-                      placeholder="フリーワード検索..."
+                      placeholder="フリーワード検索（タイトル、著者、メモ、Bookmarkなど）..."
                       value={searchWord}
                       onChange={e => setSearchWord(e.target.value)}
                       className="w-full border-none outline-none text-sm"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <select value={selectedGenre} onChange={e => setSelectedGenre(e.target.value)} className="w-full p-1.5 text-xs rounded border bg-white">
+                      <option value="">すべてのジャンル</option>
+                      {allGenres.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+
                     <select value={selectedSite} onChange={e => setSelectedSite(e.target.value)} className="w-full p-1.5 text-xs rounded border bg-white">
                       <option value="">すべての掲載サイト</option>
                       {allSites.map(s => <option key={s} value={s}>{s}</option>)}
@@ -754,7 +894,7 @@
                 </div>
               )}
 
-              {/* 新規作品登録フォーム（個別選択時は折りたたんで邪魔にならないよう非表示または通常通り利用可能） */}
+              {/* 新規作品登録フォーム */}
               {selectedWorkId === null && (
                 <details className="bg-white p-3 rounded-lg shadow-sm mb-3 border">
                   <summary className="font-bold cursor-pointer text-blue-600 text-sm">＋ 新しい作品を登録する</summary>
@@ -763,9 +903,21 @@
                       <input type="text" placeholder="作品タイトル（必須）" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="flex-[2] p-2 rounded border text-sm" required />
                       <input type="text" placeholder="著者名" value={newAuthor} onChange={e => setNewAuthor(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
                     </div>
-                    
-                    <div className="flex gap-2">
-                      <div className="flex-1 flex items-center gap-1.5 border rounded px-2 bg-white">
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {/* ジャンル選択 */}
+                      <select 
+                        value={newGenre} 
+                        onChange={e => setNewGenre(e.target.value)} 
+                        className="p-2 rounded border text-xs bg-white font-medium"
+                      >
+                        <option value="">ジャンルを選択 (未分類)</option>
+                        {masterGenres.map(g => (
+                          <option key={g} value={g}>{g}</option>
+                        ))}
+                      </select>
+
+                      <div className="flex items-center gap-1.5 border rounded px-2 bg-white">
                         <label className="text-gray-500 font-bold whitespace-nowrap">評価:</label>
                         <select value={newRating} onChange={e => setNewRating(e.target.value)} className="w-full py-1.5 text-xs bg-transparent outline-none font-bold text-yellow-600">
                           <option value="5">★★★★★ (5.0)</option>
@@ -775,7 +927,8 @@
                           <option value="1">★☆☆☆☆ (1.0)</option>
                         </select>
                       </div>
-                      <input type="text" placeholder="掲載サイト（例：ピッコマ）" value={newSite} onChange={e => setNewSite(e.target.value)} className="flex-1 p-2 rounded border text-sm" />
+
+                      <input type="text" placeholder="掲載サイト（例：ピッコマ）" value={newSite} onChange={e => setNewSite(e.target.value)} className="p-2 rounded border text-xs" />
                     </div>
 
                     {/* タグ選択UI */}
@@ -859,7 +1012,7 @@
                     const isEditing = editingWorkId === work.id;
                     const isTitleExpanded = !!expandedTitles[work.id];
                     const isMemoExpanded = !!expandedMemos[work.id];
-                    const currentInput = sceneInputs[work.id] || {};
+                    const currentInput = sceneInputs[work.id] || { tags: [] };
 
                     const sceneSort = sceneSortMap[work.id] || 'chapter-asc';
                     const sortedScenes = [...(work.scenes || [])].sort((a, b) => {
@@ -888,9 +1041,21 @@
                               <input type="text" placeholder="タイトル" value={editWorkData.title} onChange={e => setEditWorkData({...editWorkData, title: e.target.value})} className="flex-[2] p-1.5 rounded border text-xs" required />
                               <input type="text" placeholder="著者名" value={editWorkData.author} onChange={e => setEditWorkData({...editWorkData, author: e.target.value})} className="flex-1 p-1.5 rounded border text-xs" />
                             </div>
-                            
-                            <div className="flex gap-2">
-                              <div className="flex-1 flex items-center gap-1.5 border rounded px-1.5 bg-white">
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              {/* 編集時のジャンル選択 */}
+                              <select 
+                                value={editWorkData.genre || ''} 
+                                onChange={e => setEditWorkData({ ...editWorkData, genre: e.target.value })} 
+                                className="p-1.5 rounded border text-xs bg-white font-medium"
+                              >
+                                <option value="">ジャンル: 未分類</option>
+                                {masterGenres.map(g => (
+                                  <option key={g} value={g}>{g}</option>
+                                ))}
+                              </select>
+
+                              <div className="flex items-center gap-1.5 border rounded px-1.5 bg-white">
                                 <label className="text-gray-500 font-bold whitespace-nowrap">評価:</label>
                                 <select value={editWorkData.rating} onChange={e => setEditWorkData({...editWorkData, rating: e.target.value})} className="w-full py-1 text-xs bg-transparent outline-none font-bold text-yellow-600">
                                   <option value="5">★★★★★ (5.0)</option>
@@ -901,7 +1066,8 @@
                                   <option value="0">評価なし</option>
                                 </select>
                               </div>
-                              <input type="text" placeholder="掲載サイト" value={editWorkData.site} onChange={e => setEditWorkData({...editWorkData, site: e.target.value})} className="flex-1 p-1.5 rounded border text-xs" />
+
+                              <input type="text" placeholder="掲載サイト" value={editWorkData.site} onChange={e => setEditWorkData({...editWorkData, site: e.target.value})} className="p-1.5 rounded border text-xs" />
                             </div>
 
                             {/* 編集時のタグ選択UI */}
@@ -1037,6 +1203,11 @@
                                   </h2>
                                   
                                   <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                    {work.genre && (
+                                      <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold border border-amber-200">
+                                        📁 {work.genre}
+                                      </span>
+                                    )}
                                     {work.author && <span className="text-[11px] text-gray-500">{work.author}</span>}
                                     {work.site && <span className="text-[10px] bg-blue-50 text-blue-600 px-1 py-0.5 rounded font-medium">{work.site}</span>}
                                   </div>
@@ -1095,7 +1266,7 @@
                                 const isSceneEditing = editingSceneId === scene.id;
 
                                 return isSceneEditing ? (
-                                  <form key={scene.id} onSubmit={(e) => saveEditScene(work.id, scene.id, e)} className="bg-blue-50/70 border border-blue-200 p-2.5 rounded shadow-sm text-xs flex flex-col gap-1.5">
+                                  <form key={scene.id} onSubmit={(e) => saveEditScene(work.id, scene.id, e)} className="bg-blue-50/70 border border-blue-200 p-2.5 rounded shadow-sm text-xs flex flex-col gap-2">
                                     <div className="flex gap-1">
                                       <input
                                         type="text"
@@ -1112,13 +1283,48 @@
                                         className="w-20 p-1.5 rounded border text-xs"
                                       />
                                     </div>
-                                    <input
-                                      type="text"
-                                      placeholder="タグ"
-                                      value={editSceneData.tags}
-                                      onChange={e => setEditSceneData({...editSceneData, tags: e.target.value})}
-                                      className="w-full p-1.5 rounded border text-xs"
-                                    />
+
+                                    {/* Bookmark編集時のタグ選択UI */}
+                                    <div className="border p-1.5 rounded bg-white flex flex-col gap-1">
+                                      <span className="text-[10px] font-bold text-gray-600">タグを選択 (タップでON/OFF):</span>
+                                      <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto p-1 bg-gray-50 rounded border">
+                                        {masterTags.map(tag => {
+                                          const isSelected = (editSceneData.tags || []).includes(tag);
+                                          return (
+                                            <button
+                                              type="button"
+                                              key={tag}
+                                              onClick={() => toggleEditSceneTag(tag)}
+                                              className={`px-1.5 py-0.5 rounded text-[10px] border ${
+                                                isSelected 
+                                                  ? 'bg-blue-600 text-white border-blue-600 font-bold' 
+                                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                                              }`}
+                                            >
+                                              {isSelected ? '✓ ' : '+ '}#{tag}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                      <div className="flex gap-1 mt-0.5">
+                                        <input
+                                          type="text"
+                                          placeholder="新しいタグ..."
+                                          value={editSceneCustomTag}
+                                          onChange={e => setEditSceneCustomTag(e.target.value)}
+                                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addEditSceneCustomTag(); } }}
+                                          className="flex-1 p-1 rounded border text-[11px] bg-white"
+                                        />
+                                        <button 
+                                          type="button" 
+                                          onClick={addEditSceneCustomTag} 
+                                          className="px-2 py-0.5 bg-gray-600 text-white rounded text-[10px]"
+                                        >
+                                          追加
+                                        </button>
+                                      </div>
+                                    </div>
+
                                     <textarea
                                       placeholder="名シーンのメモ"
                                       value={editSceneData.memo}
@@ -1205,13 +1411,51 @@
                                   className="w-20 p-1.5 rounded border text-xs"
                                 />
                               </div>
-                              <input
-                                type="text"
-                                placeholder="タグ (カンマ区切り)"
-                                value={currentInput.tags || ''}
-                                onChange={e => handleSceneInputChange(work.id, 'tags', e.target.value)}
-                                className="w-full p-1.5 rounded border text-xs"
-                              />
+
+                              {/* Bookmark用のタグ一覧選択UI */}
+                              <div className="border p-2 rounded bg-gray-50 flex flex-col gap-1.5">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] font-bold text-gray-600">Bookmarkタグを選択:</span>
+                                  <span className="text-[9px] text-gray-400">{(currentInput.tags || []).length}個選択中</span>
+                                </div>
+                                <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto p-1 bg-white border rounded">
+                                  {masterTags.map(tag => {
+                                    const isSelected = (currentInput.tags || []).includes(tag);
+                                    return (
+                                      <button
+                                        type="button"
+                                        key={tag}
+                                        onClick={() => toggleSceneTag(work.id, tag)}
+                                        className={`px-1.5 py-0.5 rounded text-[10px] border ${
+                                          isSelected 
+                                            ? 'bg-blue-600 text-white border-blue-600 font-bold' 
+                                            : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                                        }`}
+                                      >
+                                        {isSelected ? '✓ ' : '+ '}#{tag}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                <div className="flex gap-1 mt-0.5">
+                                  <input
+                                    type="text"
+                                    placeholder="新しいタグを作成..."
+                                    value={sceneCustomTagMap[work.id] || ''}
+                                    onChange={e => setSceneCustomTagMap({ ...sceneCustomTagMap, [work.id]: e.target.value })}
+                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSceneCustomTag(work.id); } }}
+                                    className="flex-1 p-1 rounded border text-[11px] bg-white"
+                                  />
+                                  <button 
+                                    type="button" 
+                                    onClick={() => addSceneCustomTag(work.id)} 
+                                    className="px-2 py-0.5 bg-gray-600 text-white rounded text-[10px]"
+                                  >
+                                    追加
+                                  </button>
+                                </div>
+                              </div>
+
                               <textarea
                                 placeholder="名シーンのメモやセリフ"
                                 value={currentInput.memo || ''}
@@ -1274,10 +1518,50 @@
                   </select>
                 </div>
 
+                {/* ジャンル管理設定 */}
+                <div className="flex flex-col gap-1.5 text-xs border-t pt-3">
+                  <label className="font-bold text-gray-700">ジャンルの管理:</label>
+                  <p className="text-gray-500 text-[11px]">作品登録や本棚の仕分けで使うジャンルを追加・削除できます。</p>
+                  
+                  <div className="flex gap-1.5 mt-1">
+                    <input 
+                      type="text" 
+                      placeholder="新しいジャンル名..." 
+                      value={newMasterGenreInput}
+                      onChange={e => setNewMasterGenreInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddMasterGenre(); } }}
+                      className="flex-1 p-1.5 border rounded text-xs bg-white"
+                    />
+                    <button 
+                      type="button" 
+                      onClick={handleAddMasterGenre} 
+                      className="px-3 py-1.5 bg-amber-700 text-white rounded font-bold text-xs"
+                    >
+                      追加
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1.5 border rounded bg-gray-50 mt-1">
+                    {masterGenres.map(genre => (
+                      <span key={genre} className="inline-flex items-center gap-1 bg-white border border-gray-300 px-2 py-0.5 rounded text-[11px] text-gray-700">
+                        {genre}
+                        <button 
+                          type="button" 
+                          onClick={() => handleDeleteMasterGenre(genre)} 
+                          className="text-gray-400 hover:text-red-500 font-bold ml-0.5"
+                          title="削除"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
                 {/* タグ管理設定 */}
                 <div className="flex flex-col gap-1.5 text-xs border-t pt-3">
                   <label className="font-bold text-gray-700">タグの管理 (選択候補):</label>
-                  <p className="text-gray-500 text-[11px]">作品登録時に選択できるタグを追加・削除できます。</p>
+                  <p className="text-gray-500 text-[11px]">作品・Bookmark登録時に選択できるタグを追加・削除できます。</p>
                   
                   <div className="flex gap-1.5 mt-1">
                     <input 
@@ -1297,7 +1581,7 @@
                     </button>
                   </div>
 
-                  <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto p-1.5 border rounded bg-gray-50 mt-1">
+                  <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1.5 border rounded bg-gray-50 mt-1">
                     {masterTags.map(tag => (
                       <span key={tag} className="inline-flex items-center gap-1 bg-white border border-gray-300 px-2 py-0.5 rounded text-[11px] text-gray-700">
                         #{tag}
