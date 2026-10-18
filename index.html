@@ -21,6 +21,55 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
+    // --- IndexedDB ラッパーユーティリティ ---
+    const DB_NAME = 'FavoriteScenesDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'app_data';
+
+    const initDB = () => {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    };
+
+    const idbGet = async (key) => {
+      try {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction([STORE_NAME], 'readonly');
+          const store = transaction.objectStore(STORE_NAME);
+          const req = store.get(key);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const idbSet = async (key, val) => {
+      try {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction([STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(STORE_NAME);
+          const req = store.put(val, key);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      } catch (e) {
+        console.error('IndexedDB Save Error:', e);
+      }
+    };
+
     // SVGアイコン群
     const IconBook = () => <svg className="w-6 h-6 text-blue-600 inline-block flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>;
     const IconSearch = () => <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
@@ -39,7 +88,7 @@
 
     const CORRECT_PASSWORD = '1234';
 
-    // さわやかなパステルカラー（ブルー、パープル、ピンク）の薄い色味
+    // さわやかなパステルカラー（ブルー、パープル、ピンク）
     const spineColors = [
       'bg-sky-100 text-sky-900 border-sky-300',
       'bg-purple-100 text-purple-900 border-purple-300',
@@ -59,7 +108,8 @@
       );
     };
 
-    const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.7) => {
+    // 最適化された画像圧縮（長辺600px、画質0.65でクリアかつ容量をセーブ）
+    const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0.65) => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -104,50 +154,31 @@
       const [passwordInput, setPasswordInput] = useState('');
       const [passError, setPassError] = useState(false);
 
-      const [works, setWorks] = useState(() => {
-        try {
-          const saved = localStorage.getItem('manga_scene_works');
-          return saved ? JSON.parse(saved) : [];
-        } catch(e) { return []; }
-      });
-
-      // ジャンル一覧
-      const [masterGenres, setMasterGenres] = useState(() => {
-        try {
-          const saved = localStorage.getItem('manga_master_genres');
-          if (saved) return JSON.parse(saved);
-          return ['ファンタジー', 'アクション', '恋愛', 'サバイバル', '日常', 'SF・ミステリー', 'コメディ', 'ホラー', 'その他'];
-        } catch(e) { return []; }
-      });
+      const [isDataLoaded, setIsDataLoaded] = useState(false);
+      const [works, setWorks] = useState([]);
+      const [masterGenres, setMasterGenres] = useState([
+        'ファンタジー', 'アクション', '恋愛', 'サバイバル', '日常', 'SF・ミステリー', 'コメディ', 'ホラー', 'その他'
+      ]);
       const [newMasterGenreInput, setNewMasterGenreInput] = useState('');
 
-      // マスタータグ一覧
-      const [masterTags, setMasterTags] = useState(() => {
-        try {
-          const saved = localStorage.getItem('manga_master_tags');
-          if (saved) return JSON.parse(saved);
-          return ['絵が綺麗', '主人公が魅力的', '名言', '感動', '名バトル', '伏線回収', 'ギャグ', '切ない'];
-        } catch(e) { return []; }
-      });
+      const [masterTags, setMasterTags] = useState([
+        '絵が綺麗', '主人公が魅力的', '名言', '感動', '名バトル', '伏線回収', 'ギャグ', '切ない'
+      ]);
       const [newMasterTagInput, setNewMasterTagInput] = useState('');
 
       const [viewMode, setViewMode] = useState('list');
       const [shelfGenreFilter, setShelfGenreFilter] = useState('');
       const [selectedWorkId, setSelectedWorkId] = useState(null);
 
-      const [defaultSort, setDefaultSort] = useState(() => {
-        try { return localStorage.getItem('manga_default_sort') || 'rating-desc'; } catch(e) { return 'rating-desc'; }
-      });
-      const [currentSort, setCurrentSort] = useState(() => {
-        try { return localStorage.getItem('manga_default_sort') || 'rating-desc'; } catch(e) { return 'rating-desc'; }
-      });
+      const [defaultSort, setDefaultSort] = useState('rating-desc');
+      const [currentSort, setCurrentSort] = useState('rating-desc');
       const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
       // 非表示管理用状態
       const [isSecretUnlocked, setIsSecretUnlocked] = useState(false);
       const [secretPasswordInput, setSecretPasswordInput] = useState('');
       const [secretPassError, setSecretPassError] = useState(false);
-      const [secretTab, setSecretTab] = useState('works'); // 'works' or 'scenes'
+      const [secretTab, setSecretTab] = useState('works');
 
       const [sceneSortMap, setSceneSortMap] = useState({});
 
@@ -160,7 +191,7 @@
       const [expandedTitles, setExpandedTitles] = useState({});
       const [expandedMemos, setExpandedMemos] = useState({});
 
-      // 新規登録用フォーム状態
+      // 新規登録フォーム用
       const [newTitle, setNewTitle] = useState('');
       const [newAuthor, setNewAuthor] = useState('');
       const [newGenre, setNewGenre] = useState('');
@@ -171,11 +202,10 @@
       const [newCustomTag, setNewCustomTag] = useState('');
       const [newWorkMemo, setNewWorkMemo] = useState('');
 
-      // 作品編集モード状態
+      // 編集用
       const [editingWorkId, setEditingWorkId] = useState(null);
       const [editWorkData, setEditWorkData] = useState({});
 
-      // Bookmark入力フォーム状態
       const [sceneInputs, setSceneInputs] = useState({});
       const [sceneCustomTagMap, setSceneCustomTagMap] = useState({});
       const [editingSceneId, setEditingSceneId] = useState(null);
@@ -185,25 +215,85 @@
 
       const fileInputRef = useRef(null);
 
+      // --- IndexedDB 初期読み込み ＆ localStorage からの自動移行 ---
       useEffect(() => {
-        try {
-          localStorage.setItem('manga_scene_works', JSON.stringify(works));
-        } catch(e) {
-          alert('保存容量の上限を超えた可能性があります。古い画像を削除するかバックアップを取ってください。');
-        }
-      }, [works]);
+        const loadInitialData = async () => {
+          try {
+            let loadedWorks = await idbGet('manga_scene_works');
+            // IndexedDB にまだない場合、localStorage から移行
+            if (!loadedWorks) {
+              const localSaved = localStorage.getItem('manga_scene_works');
+              if (localSaved) {
+                try {
+                  loadedWorks = JSON.parse(localSaved);
+                  await idbSet('manga_scene_works', loadedWorks);
+                } catch(e) {}
+              }
+            }
+            if (loadedWorks && Array.isArray(loadedWorks)) {
+              setWorks(loadedWorks);
+            }
+
+            let loadedGenres = await idbGet('manga_master_genres');
+            if (!loadedGenres) {
+              const localSaved = localStorage.getItem('manga_master_genres');
+              if (localSaved) {
+                try {
+                  loadedGenres = JSON.parse(localSaved);
+                  await idbSet('manga_master_genres', loadedGenres);
+                } catch(e) {}
+              }
+            }
+            if (loadedGenres && Array.isArray(loadedGenres)) {
+              setMasterGenres(loadedGenres);
+            }
+
+            let loadedTags = await idbGet('manga_master_tags');
+            if (!loadedTags) {
+              const localSaved = localStorage.getItem('manga_master_tags');
+              if (localSaved) {
+                try {
+                  loadedTags = JSON.parse(localSaved);
+                  await idbSet('manga_master_tags', loadedTags);
+                } catch(e) {}
+              }
+            }
+            if (loadedTags && Array.isArray(loadedTags)) {
+              setMasterTags(loadedTags);
+            }
+
+            let loadedSort = await idbGet('manga_default_sort');
+            if (!loadedSort) {
+              loadedSort = localStorage.getItem('manga_default_sort') || 'rating-desc';
+            }
+            setDefaultSort(loadedSort);
+            setCurrentSort(loadedSort);
+
+          } catch (err) {
+            console.error('Data load error:', err);
+          } finally {
+            setIsDataLoaded(true);
+          }
+        };
+
+        loadInitialData();
+      }, []);
+
+      // データ保存（IndexedDBへ自動非同期保存）
+      useEffect(() => {
+        if (!isDataLoaded) return;
+        idbSet('manga_scene_works', works);
+      }, [works, isDataLoaded]);
 
       useEffect(() => {
-        try {
-          localStorage.setItem('manga_master_genres', JSON.stringify(masterGenres));
-        } catch(e) {}
-      }, [masterGenres]);
+        if (!isDataLoaded) return;
+        idbSet('manga_master_genres', masterGenres);
+      }, [masterGenres, isDataLoaded]);
 
       useEffect(() => {
-        try {
-          localStorage.setItem('manga_master_tags', JSON.stringify(masterTags));
-        } catch(e) {}
-      }, [masterTags]);
+        if (!isDataLoaded) return;
+        idbSet('manga_master_tags', masterTags);
+      }, [masterTags, isDataLoaded]);
 
       const handleLogin = (e) => {
         e.preventDefault();
@@ -264,7 +354,6 @@
         }
       };
 
-      // タグ選択のトグル処理
       const toggleTagInList = (currentList, tag) => {
         if (currentList.includes(tag)) {
           return currentList.filter(t => t !== tag);
@@ -351,7 +440,6 @@
         }
       };
 
-      // 作品の新規追加
       const addWork = (e) => {
         e.preventDefault();
         if (!newTitle.trim()) return;
@@ -366,7 +454,7 @@
           site: newSite,
           tags: newSelectedTags,
           memo: newWorkMemo,
-          isHidden: false, // 非表示フラグ
+          isHidden: false,
           scenes: [],
           createdAt: new Date().toISOString()
         };
@@ -423,7 +511,6 @@
         }
       };
 
-      // ★ 作品の非表示トグル
       const toggleHideWork = (workId, e) => {
         if (e) e.stopPropagation();
         setWorks(works.map(w => {
@@ -437,7 +524,6 @@
         if (selectedWorkId === workId) setSelectedWorkId(null);
       };
 
-      // ★ Bookmark（話数・シーン）の非表示トグル
       const toggleHideScene = (workId, sceneId, e) => {
         if (e) e.stopPropagation();
         setWorks(works.map(w => {
@@ -485,7 +571,7 @@
           memo: input.memo || '',
           image: input.image || '',
           tags: Array.isArray(input.tags) ? input.tags : (input.tags ? String(input.tags).split(',').map(t => t.trim()).filter(Boolean) : []),
-          isHidden: false, // Bookmark非表示フラグ
+          isHidden: false,
           createdAt: new Date().toISOString()
         };
 
@@ -616,13 +702,10 @@
       const saveDefaultSettings = (newDefSort) => {
         setDefaultSort(newDefSort);
         setCurrentSort(newDefSort);
-        try {
-          localStorage.setItem('manga_default_sort', newDefSort);
-        } catch(e) {}
+        idbSet('manga_default_sort', newDefSort);
         setIsSettingsOpen(false);
       };
 
-      // タグ・ジャンル管理関数
       const handleAddMasterTag = () => {
         const val = newMasterTagInput.trim();
         if (!val) return;
@@ -649,7 +732,6 @@
         setMasterGenres(masterGenres.filter(g => g !== genreToDelete));
       };
 
-      // 非表示管理パスワード認証
       const handleUnlockSecret = (e) => {
         e.preventDefault();
         if (secretPasswordInput === CORRECT_PASSWORD) {
@@ -661,7 +743,6 @@
         }
       };
 
-      // ★ 通常表示用（非表示作品を除外したリスト）
       const visibleWorks = works.filter(w => !w.isHidden);
 
       const allSites = Array.from(new Set(visibleWorks.map(w => w.site).filter(Boolean)));
@@ -674,7 +755,6 @@
         ])
       ]));
 
-      // 検索・フィルタリング処理（非表示作品・非表示シーンは除外）
       const filteredWorks = visibleWorks.filter(w => {
         if (selectedWorkId !== null) {
           return w.id === selectedWorkId;
@@ -713,7 +793,6 @@
         return 0;
       });
 
-      // 本棚表示用のジャンル別グループ化処理（非表示作品は除外）
       const shelfGenreGroups = () => {
         const targetGenres = shelfGenreFilter 
           ? [shelfGenreFilter] 
@@ -801,14 +880,13 @@
             </div>
           </div>
 
-          {/* 本棚表示モード（背景白、枠・下板ネイビー、アイディアBインデックスリボン、星は数字表記） */}
+          {/* 本棚表示モード */}
           {viewMode === 'shelf' ? (
             <div className="bg-white rounded-xl p-3 shadow-sm border-2 border-slate-800">
               <div className="flex items-center justify-between mb-4 border-b pb-2">
                 <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                   <span className="text-sm">📚</span>
                   <span>マイ本棚</span>
-                  {/* 水色ベースの冊数バッジ */}
                   <span className="text-[10px] bg-sky-100 text-sky-800 border border-sky-300 px-2 py-0.5 rounded-full font-bold">
                     {visibleWorks.length}冊
                   </span>
@@ -835,19 +913,18 @@
                   shelfGenreGroups().map(group => (
                     <div key={group.genre} className="relative bg-white pt-5 pb-0 px-2 rounded-lg border-2 border-slate-800 shadow-sm">
                       
-                      {/* アイディアB：左上のインデックス・見出しリボン風 */}
+                      {/* インデックス・見出しリボン風 */}
                       <div className="absolute -top-3 left-3 flex items-center shadow-md">
                         <div className="bg-slate-900 text-white text-[11px] font-bold px-3 py-1 rounded-t-sm flex items-center gap-1.5 border-t border-l border-r border-slate-700">
                           <span className="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block"></span>
                           <span>{group.genre}</span>
                         </div>
-                        {/* 水色の冊数表示 */}
                         <div className="bg-sky-100 text-sky-800 border-y border-r border-sky-300 text-[10px] font-bold px-2 py-1 rounded-tr-sm">
                           {group.works.length}冊
                         </div>
                       </div>
 
-                      {/* 本の並び ＋ 紺色の下板（border-b-8 border-slate-900） */}
+                      {/* 本の並び ＋ 紺色の下板 */}
                       <div className="flex flex-wrap items-end gap-2 min-h-[170px] border-b-8 border-slate-900 pb-1 px-1 bg-gradient-to-b from-white to-slate-50/50">
                         {group.works.length === 0 ? (
                           <p className="text-[11px] text-slate-400 m-auto py-8">この棚には作品がありません</p>
@@ -863,7 +940,6 @@
                                 title={`${work.title}\nジャンル: ${work.genre || '未設定'}\n（クリックでこの作品のみを開く）`}
                                 className={`w-9 sm:w-10 h-36 sm:h-40 ${colorClass} rounded-t-sm shadow-md flex flex-col justify-between items-center py-2 px-0.5 border cursor-pointer hover:-translate-y-2 hover:shadow-xl transition-transform relative select-none`}
                               >
-                                {/* ★ 見やすい「★5」形式の評価表示 */}
                                 <div className="text-[9px] font-bold tracking-tight text-amber-500 drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)] bg-white/70 px-1 py-0.2 rounded-full border border-amber-200">
                                   ★{Number(work.rating) || 0}
                                 </div>
@@ -872,7 +948,6 @@
                                   {work.title}
                                 </div>
 
-                                {/* 水色基調のシーン数バッジ */}
                                 <div className="text-[8px] font-semibold bg-white/80 text-sky-800 rounded px-1 shadow-xs border border-sky-200">
                                   {visibleSceneCount}
                                 </div>
@@ -1033,7 +1108,7 @@
                     </div>
                     
                     <div className="flex flex-col gap-1">
-                      <label className="font-bold text-gray-600">表紙画像を選択 (自動圧縮):</label>
+                      <label className="font-bold text-gray-600">表紙画像を選択 (大容量対応・自動最適化):</label>
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -1068,7 +1143,6 @@
                     const isMemoExpanded = !!expandedMemos[work.id];
                     const currentInput = sceneInputs[work.id] || { tags: [] };
 
-                    // ★ 非表示のシーンを除外してカウント・並び替え
                     const visibleScenes = (work.scenes || []).filter(s => !s.isHidden);
 
                     const sceneSort = sceneSortMap[work.id] || 'chapter-asc';
@@ -1181,7 +1255,7 @@
                             </div>
                             
                             <div className="flex flex-col gap-1">
-                              <label className="font-bold text-gray-600">画像を変更 (自動圧縮):</label>
+                              <label className="font-bold text-gray-600">画像を変更:</label>
                               <input 
                                 type="file" 
                                 accept="image/*" 
@@ -1208,7 +1282,6 @@
                             onClick={() => toggleExpand(work.id)} 
                             className={`p-3 flex gap-3 cursor-pointer select-none active:bg-gray-50 ${isOpen ? 'border-b' : ''}`}
                           >
-                            {/* 左側: 表紙画像 ＋ アクションボタン（非表示ボタン追加） */}
                             <div className="flex flex-col items-center flex-shrink-0">
                               {work.image ? (
                                 <img 
@@ -1235,10 +1308,9 @@
                                   <IconPencil />
                                 </button>
                                 <span className="text-gray-300 text-[9px]">|</span>
-                                {/* ★ 作品を非表示にするボタン */}
                                 <button 
                                   onClick={(e) => toggleHideWork(work.id, e)} 
-                                  title="この作品を非表示にする（人に紹介するとき隠す）" 
+                                  title="この作品を非表示にする" 
                                   className="p-0.5 hover:bg-gray-200 rounded"
                                 >
                                   <IconEyeOff />
@@ -1254,7 +1326,6 @@
                               </div>
                             </div>
 
-                            {/* 右側: 作品情報テキスト */}
                             <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-start gap-1">
                                 <div className="min-w-0 flex-1">
@@ -1348,7 +1419,6 @@
                                       />
                                     </div>
 
-                                    {/* Bookmark編集時のタグ選択UI */}
                                     <div className="border p-1.5 rounded bg-white flex flex-col gap-1">
                                       <span className="text-[10px] font-bold text-gray-600">タグを選択 (タップでON/OFF):</span>
                                       <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto p-1 bg-gray-50 rounded border">
@@ -1437,7 +1507,6 @@
                                           <button onClick={(e) => startEditScene(scene, e)} className="p-0.5 hover:bg-gray-100 rounded" title="編集">
                                             <IconPencilSmall />
                                           </button>
-                                          {/* ★ Bookmarkを非表示にするボタン */}
                                           <button onClick={(e) => toggleHideScene(work.id, scene.id, e)} className="p-0.5 hover:bg-gray-100 rounded" title="このBookmarkを非表示にする">
                                             <IconEyeOff />
                                           </button>
@@ -1480,7 +1549,6 @@
                                 />
                               </div>
 
-                              {/* Bookmark用のタグ一覧選択UI */}
                               <div className="border p-2 rounded bg-gray-50 flex flex-col gap-1.5">
                                 <div className="flex justify-between items-center">
                                   <span className="text-[10px] font-bold text-gray-600">Bookmarkタグを選択:</span>
@@ -1559,7 +1627,7 @@
             </>
           )}
 
-          {/* 設定モーダル（パスワード付き非表示管理を追加） */}
+          {/* 設定モーダル */}
           {isSettingsOpen && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-xl max-w-sm w-full p-4 shadow-xl flex flex-col gap-3.5 max-h-[90vh] overflow-y-auto">
@@ -1666,7 +1734,7 @@
                   </div>
                 </div>
 
-                {/* ★ パスワード付き非表示一覧管理エリア */}
+                {/* パスワード付き非表示一覧管理エリア */}
                 <div className="flex flex-col gap-2 text-xs border-t pt-3 bg-amber-50/70 -mx-4 px-4 py-3 border-amber-200">
                   <label className="font-bold text-amber-900 flex items-center gap-1">
                     <span>🔒 非表示作品・Bookmarkの管理</span>
@@ -1708,7 +1776,6 @@
                         </button>
                       </div>
 
-                      {/* 隠した作品リスト */}
                       {secretTab === 'works' && (
                         <div className="max-h-40 overflow-y-auto flex flex-col gap-1.5 bg-white p-2 rounded border border-amber-200">
                           {works.filter(w => w.isHidden).length === 0 ? (
@@ -1730,7 +1797,6 @@
                         </div>
                       )}
 
-                      {/* 隠したBookmarkリスト */}
                       {secretTab === 'scenes' && (
                         <div className="max-h-40 overflow-y-auto flex flex-col gap-1.5 bg-white p-2 rounded border border-amber-200">
                           {works.flatMap(w => (w.scenes || []).filter(s => s.isHidden).map(s => ({ workTitle: w.title, workId: w.id, scene: s }))).length === 0 ? (
