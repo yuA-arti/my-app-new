@@ -21,27 +21,21 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // SVGアイコン
+    // SVGアイコン群
     const IconBook = () => <svg className="w-6 h-6 text-blue-600 inline-block flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>;
     const IconSearch = () => <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
     const IconUp = () => <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" /></svg>;
     const IconDown = () => <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>;
-    const IconPencil = () => (
-      <svg className="w-3.5 h-3.5 text-blue-600 hover:text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-      </svg>
-    );
-    const IconPencilSmall = () => (
-      <svg className="w-3.5 h-3.5 text-blue-500 hover:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-      </svg>
-    );
+    const IconPencil = () => <svg className="w-3.5 h-3.5 text-blue-600 hover:text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>;
+    const IconPencilSmall = () => <svg className="w-3.5 h-3.5 text-blue-500 hover:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>;
     const IconTrash = () => <svg className="w-3.5 h-3.5 text-red-500 hover:text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
     const IconTrashSmall = () => <svg className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
     const IconBookmark = () => <svg className="w-3.5 h-3.5 text-gray-600 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>;
     const IconLock = () => <svg className="w-10 h-10 text-blue-500 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
     const IconGear = () => <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
     const IconShelf = () => <svg className="w-3.5 h-3.5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>;
+    const IconEyeOff = () => <svg className="w-3.5 h-3.5 text-gray-500 hover:text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>;
+    const IconEye = () => <svg className="w-3.5 h-3.5 text-blue-600 hover:text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>;
 
     const CORRECT_PASSWORD = '1234';
 
@@ -117,7 +111,7 @@
         } catch(e) { return []; }
       });
 
-      // ジャンル一覧（設定で管理可能）
+      // ジャンル一覧
       const [masterGenres, setMasterGenres] = useState(() => {
         try {
           const saved = localStorage.getItem('manga_master_genres');
@@ -138,8 +132,8 @@
       const [newMasterTagInput, setNewMasterTagInput] = useState('');
 
       const [viewMode, setViewMode] = useState('list');
-      const [shelfGenreFilter, setShelfGenreFilter] = useState(''); // 本棚画面での絞り込みフィルター（空の場合は全ジャンル棚表示）
-      const [selectedWorkId, setSelectedWorkId] = useState(null); // 本棚から個別選択された作品ID
+      const [shelfGenreFilter, setShelfGenreFilter] = useState('');
+      const [selectedWorkId, setSelectedWorkId] = useState(null);
 
       const [defaultSort, setDefaultSort] = useState(() => {
         try { return localStorage.getItem('manga_default_sort') || 'rating-desc'; } catch(e) { return 'rating-desc'; }
@@ -148,6 +142,12 @@
         try { return localStorage.getItem('manga_default_sort') || 'rating-desc'; } catch(e) { return 'rating-desc'; }
       });
       const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+      // 非表示管理用状態
+      const [isSecretUnlocked, setIsSecretUnlocked] = useState(false);
+      const [secretPasswordInput, setSecretPasswordInput] = useState('');
+      const [secretPassError, setSecretPassError] = useState(false);
+      const [secretTab, setSecretTab] = useState('works'); // 'works' or 'scenes'
 
       const [sceneSortMap, setSceneSortMap] = useState({});
 
@@ -264,7 +264,7 @@
         }
       };
 
-      // タグ選択のトグル
+      // タグ選択のトグル処理
       const toggleTagInList = (currentList, tag) => {
         if (currentList.includes(tag)) {
           return currentList.filter(t => t !== tag);
@@ -282,7 +282,6 @@
         setEditWorkData({ ...editWorkData, tags: toggleTagInList(currentTags, tag) });
       };
 
-      // Bookmark作成フォーム用のタグトグル
       const toggleSceneTag = (workId, tag) => {
         const currentInput = sceneInputs[workId] || {};
         const currentTags = currentInput.tags || [];
@@ -293,7 +292,6 @@
         }));
       };
 
-      // Bookmark作成フォーム用カスタムタグ追加
       const addSceneCustomTag = (workId) => {
         const val = (sceneCustomTagMap[workId] || '').trim();
         if (!val) return;
@@ -311,13 +309,11 @@
         setSceneCustomTagMap(prev => ({ ...prev, [workId]: '' }));
       };
 
-      // Bookmark編集用のタグトグル
       const toggleEditSceneTag = (tag) => {
         const currentTags = editSceneData.tags || [];
         setEditSceneData({ ...editSceneData, tags: toggleTagInList(currentTags, tag) });
       };
 
-      // Bookmark編集用のカスタムタグ追加
       const addEditSceneCustomTag = () => {
         const val = editSceneCustomTag.trim();
         if (!val) return;
@@ -355,6 +351,7 @@
         }
       };
 
+      // 作品の新規追加
       const addWork = (e) => {
         e.preventDefault();
         if (!newTitle.trim()) return;
@@ -369,6 +366,7 @@
           site: newSite,
           tags: newSelectedTags,
           memo: newWorkMemo,
+          isHidden: false, // 非表示フラグ
           scenes: [],
           createdAt: new Date().toISOString()
         };
@@ -425,6 +423,41 @@
         }
       };
 
+      // ★ 作品の非表示トグル
+      const toggleHideWork = (workId, e) => {
+        if (e) e.stopPropagation();
+        setWorks(works.map(w => {
+          if (w.id === workId) {
+            const nextState = !w.isHidden;
+            alert(nextState ? `「${w.title}」を非表示にしました。（設定の非表示管理から復帰できます）` : `「${w.title}」を再表示しました。`);
+            return { ...w, isHidden: nextState };
+          }
+          return w;
+        }));
+        if (selectedWorkId === workId) setSelectedWorkId(null);
+      };
+
+      // ★ Bookmark（話数・シーン）の非表示トグル
+      const toggleHideScene = (workId, sceneId, e) => {
+        if (e) e.stopPropagation();
+        setWorks(works.map(w => {
+          if (w.id === workId) {
+            return {
+              ...w,
+              scenes: (w.scenes || []).map(s => {
+                if (s.id === sceneId) {
+                  const nextState = !s.isHidden;
+                  alert(nextState ? 'このBookmarkを非表示にしました。' : 'このBookmarkを再表示しました。');
+                  return { ...s, isHidden: nextState };
+                }
+                return s;
+              })
+            };
+          }
+          return w;
+        }));
+      };
+
       const toggleExpand = (id) => {
         if (editingWorkId === id) return;
         setExpandedMap(prev => ({ ...prev, [id]: !prev[id] }));
@@ -452,6 +485,7 @@
           memo: input.memo || '',
           image: input.image || '',
           tags: Array.isArray(input.tags) ? input.tags : (input.tags ? String(input.tags).split(',').map(t => t.trim()).filter(Boolean) : []),
+          isHidden: false, // Bookmark非表示フラグ
           createdAt: new Date().toISOString()
         };
 
@@ -615,18 +649,33 @@
         setMasterGenres(masterGenres.filter(g => g !== genreToDelete));
       };
 
-      const allSites = Array.from(new Set(works.map(w => w.site).filter(Boolean)));
-      const allGenres = Array.from(new Set([...masterGenres, ...works.map(w => w.genre).filter(Boolean)]));
+      // 非表示管理パスワード認証
+      const handleUnlockSecret = (e) => {
+        e.preventDefault();
+        if (secretPasswordInput === CORRECT_PASSWORD) {
+          setIsSecretUnlocked(true);
+          setSecretPassError(false);
+          setSecretPasswordInput('');
+        } else {
+          setSecretPassError(true);
+        }
+      };
+
+      // ★ 通常表示用（非表示作品を除外したリスト）
+      const visibleWorks = works.filter(w => !w.isHidden);
+
+      const allSites = Array.from(new Set(visibleWorks.map(w => w.site).filter(Boolean)));
+      const allGenres = Array.from(new Set([...masterGenres, ...visibleWorks.map(w => w.genre).filter(Boolean)]));
       const allTags = Array.from(new Set([
         ...masterTags,
-        ...works.flatMap(w => [
+        ...visibleWorks.flatMap(w => [
           ...(w.tags || []),
-          ...(w.scenes || []).flatMap(s => s.tags || [])
+          ...(w.scenes || []).filter(s => !s.isHidden).flatMap(s => s.tags || [])
         ])
       ]));
 
-      // 検索・フィルタリング処理
-      const filteredWorks = works.filter(w => {
+      // 検索・フィルタリング処理（非表示作品・非表示シーンは除外）
+      const filteredWorks = visibleWorks.filter(w => {
         if (selectedWorkId !== null) {
           return w.id === selectedWorkId;
         }
@@ -635,14 +684,14 @@
           (w.title && w.title.toLowerCase().includes(searchWord.toLowerCase())) ||
           (w.author && w.author.toLowerCase().includes(searchWord.toLowerCase())) ||
           (w.memo && w.memo.toLowerCase().includes(searchWord.toLowerCase())) ||
-          (w.scenes && w.scenes.some(s => s.memo && s.memo.toLowerCase().includes(searchWord.toLowerCase())));
+          (w.scenes && w.scenes.some(s => !s.isHidden && s.memo && s.memo.toLowerCase().includes(searchWord.toLowerCase())));
 
         const matchGenre = selectedGenre === '' || w.genre === selectedGenre;
         const matchSite = selectedSite === '' || w.site === selectedSite;
 
         const matchTag = selectedTag === '' || 
           (w.tags && w.tags.includes(selectedTag)) ||
-          (w.scenes && w.scenes.some(s => s.tags && s.tags.includes(selectedTag)));
+          (w.scenes && w.scenes.some(s => !s.isHidden && s.tags && s.tags.includes(selectedTag)));
 
         return matchWord && matchGenre && matchSite && matchTag;
       }).sort((a, b) => {
@@ -664,15 +713,14 @@
         return 0;
       });
 
-      // 本棚表示用のジャンル別グループ化処理
+      // 本棚表示用のジャンル別グループ化処理（非表示作品は除外）
       const shelfGenreGroups = () => {
-        // 表示対象のジャンルリスト
         const targetGenres = shelfGenreFilter 
           ? [shelfGenreFilter] 
           : [...allGenres, '未分類'];
 
         return targetGenres.map(genre => {
-          const list = works.filter(w => {
+          const list = visibleWorks.filter(w => {
             if (genre === '未分類') {
               return !w.genre || w.genre === '';
             }
@@ -734,7 +782,7 @@
                   }
                 }}
                 className={`px-2.5 py-1.5 rounded font-bold whitespace-nowrap flex items-center transition-colors ${
-                  viewMode === 'shelf' ? 'bg-amber-700 text-white hover:bg-amber-800' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  viewMode === 'shelf' ? 'bg-indigo-900 text-white hover:bg-indigo-950' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                 }`}
               >
                 <IconShelf /> {viewMode === 'shelf' ? '一覧で見る' : '本棚で見る'}
@@ -746,27 +794,29 @@
               <button onClick={() => fileInputRef.current?.click()} className="bg-gray-200 hover:bg-gray-300 px-2 py-1.5 rounded text-gray-700 font-bold whitespace-nowrap">
                 復元(読み込み)
               </button>
-              <button onClick={() => setIsSettingsOpen(true)} title="設定" className="bg-gray-200 hover:bg-gray-300 p-1.5 rounded text-gray-700 flex items-center justify-center">
+              <button onClick={() => { setIsSettingsOpen(true); setIsSecretUnlocked(false); }} title="設定" className="bg-gray-200 hover:bg-gray-300 p-1.5 rounded text-gray-700 flex items-center justify-center">
                 <IconGear />
               </button>
               <input type="file" ref={fileInputRef} onChange={importBackup} accept=".json" className="hidden" />
             </div>
           </div>
 
-          {/* 本棚表示モード（ジャンルごとに棚を分けて表示） */}
+          {/* 本棚表示モード（背景白、枠・下板ネイビー、アイディアBインデックスリボン、星は数字表記） */}
           {viewMode === 'shelf' ? (
-            <div className="bg-stone-100 rounded-xl p-3 shadow-inner border border-stone-300">
-              <div className="flex items-center justify-between mb-3 border-b border-stone-300 pb-2">
-                <div className="text-xs font-bold text-stone-800 flex items-center gap-1">
-                  <span>📚 マイ本棚</span>
-                  <span className="text-[10px] bg-stone-300 text-stone-700 px-1.5 py-0.5 rounded-full">
-                    {works.length}冊
+            <div className="bg-white rounded-xl p-3 shadow-sm border-2 border-slate-800">
+              <div className="flex items-center justify-between mb-4 border-b pb-2">
+                <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <span className="text-sm">📚</span>
+                  <span>マイ本棚</span>
+                  {/* 水色ベースの冊数バッジ */}
+                  <span className="text-[10px] bg-sky-100 text-sky-800 border border-sky-300 px-2 py-0.5 rounded-full font-bold">
+                    {visibleWorks.length}冊
                   </span>
                 </div>
                 <select 
                   value={shelfGenreFilter} 
                   onChange={e => setShelfGenreFilter(e.target.value)} 
-                  className="p-1 text-xs rounded border border-stone-300 bg-white"
+                  className="p-1 text-xs rounded border border-gray-300 bg-white"
                 >
                   <option value="">すべてのジャンル棚を表示</option>
                   {allGenres.map(g => (
@@ -776,49 +826,55 @@
               </div>
 
               {/* ジャンルごとの棚 */}
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-6">
                 {shelfGenreGroups().length === 0 ? (
-                  <div className="bg-amber-950/20 p-6 rounded-lg text-center text-xs text-stone-500">
-                    本棚に作品がありません
+                  <div className="bg-slate-50 p-8 rounded-lg text-center text-xs text-slate-500 border border-slate-200">
+                    本棚に表示できる作品がありません
                   </div>
                 ) : (
                   shelfGenreGroups().map(group => (
-                    <div key={group.genre} className="bg-amber-950/15 p-2.5 sm:p-3 rounded-lg border-2 border-amber-900/30">
-                      {/* 棚のジャンル見出し */}
-                      <div className="flex items-center justify-between mb-2 px-1">
-                        <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
-                          <span className="inline-block w-2 h-2 rounded-full bg-amber-700"></span>
-                          {group.genre}
-                        </span>
-                        <span className="text-[10px] text-amber-900/80 font-semibold bg-amber-100/80 px-1.5 py-0.2 rounded border border-amber-300">
+                    <div key={group.genre} className="relative bg-white pt-5 pb-0 px-2 rounded-lg border-2 border-slate-800 shadow-sm">
+                      
+                      {/* アイディアB：左上のインデックス・見出しリボン風 */}
+                      <div className="absolute -top-3 left-3 flex items-center shadow-md">
+                        <div className="bg-slate-900 text-white text-[11px] font-bold px-3 py-1 rounded-t-sm flex items-center gap-1.5 border-t border-l border-r border-slate-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block"></span>
+                          <span>{group.genre}</span>
+                        </div>
+                        {/* 水色の冊数表示 */}
+                        <div className="bg-sky-100 text-sky-800 border-y border-r border-sky-300 text-[10px] font-bold px-2 py-1 rounded-tr-sm">
                           {group.works.length}冊
-                        </span>
+                        </div>
                       </div>
 
-                      {/* 本の並び（木製風の棚板） */}
-                      <div className="flex flex-wrap items-end gap-1.5 min-h-[170px] border-b-8 border-amber-900 pb-1 px-1">
+                      {/* 本の並び ＋ 紺色の下板（border-b-8 border-slate-900） */}
+                      <div className="flex flex-wrap items-end gap-2 min-h-[170px] border-b-8 border-slate-900 pb-1 px-1 bg-gradient-to-b from-white to-slate-50/50">
                         {group.works.length === 0 ? (
-                          <p className="text-[11px] text-stone-400 m-auto py-6">この棚には作品がありません</p>
+                          <p className="text-[11px] text-slate-400 m-auto py-8">この棚には作品がありません</p>
                         ) : (
                           group.works.map((work, idx) => {
                             const colorClass = spineColors[idx % spineColors.length];
+                            const visibleSceneCount = (work.scenes || []).filter(s => !s.isHidden).length;
+
                             return (
                               <div
                                 key={work.id}
                                 onClick={() => openWorkFromShelf(work.id)}
                                 title={`${work.title}\nジャンル: ${work.genre || '未設定'}\n（クリックでこの作品のみを開く）`}
-                                className={`w-9 sm:w-10 h-36 sm:h-40 ${colorClass} rounded-t-sm shadow-md flex flex-col justify-between items-center py-2 px-0.5 border cursor-pointer hover:-translate-y-2 hover:shadow-lg transition-transform relative select-none`}
+                                className={`w-9 sm:w-10 h-36 sm:h-40 ${colorClass} rounded-t-sm shadow-md flex flex-col justify-between items-center py-2 px-0.5 border cursor-pointer hover:-translate-y-2 hover:shadow-xl transition-transform relative select-none`}
                               >
-                                <div className="text-[8px] text-amber-500 font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
-                                  {'★'.repeat(Math.min(5, Number(work.rating) || 0))}
+                                {/* ★ 見やすい「★5」形式の評価表示 */}
+                                <div className="text-[9px] font-bold tracking-tight text-amber-500 drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)] bg-white/70 px-1 py-0.2 rounded-full border border-amber-200">
+                                  ★{Number(work.rating) || 0}
                                 </div>
                                 
                                 <div className="vertical-text text-[10px] sm:text-[11px] font-bold leading-none tracking-wider overflow-hidden max-h-24 text-center">
                                   {work.title}
                                 </div>
 
-                                <div className="text-[8px] font-semibold bg-white/70 text-gray-700 rounded px-1 shadow-xs border border-white/60">
-                                  {work.scenes?.length || 0}
+                                {/* 水色基調のシーン数バッジ */}
+                                <div className="text-[8px] font-semibold bg-white/80 text-sky-800 rounded px-1 shadow-xs border border-sky-200">
+                                  {visibleSceneCount}
                                 </div>
                               </div>
                             );
@@ -829,14 +885,14 @@
                   ))
                 )}
               </div>
-              <p className="text-[10px] text-stone-500 mt-3 text-center">💡 背表紙をタップすると該当の作品のみが表示されます</p>
+              <p className="text-[10px] text-slate-500 mt-4 text-center">💡 背表紙をタップすると該当の作品のみが表示されます</p>
             </div>
           ) : (
             <>
               {/* 本棚から特定作品を開いた時のナビゲーションバー */}
               {selectedWorkId !== null ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5 mb-3 flex items-center justify-between">
-                  <span className="text-xs text-blue-900 font-bold">
+                <div className="bg-sky-50 border border-sky-200 rounded-lg p-2.5 mb-3 flex items-center justify-between">
+                  <span className="text-xs text-sky-900 font-bold">
                     📖 本棚から選択した作品を表示中
                   </span>
                   <div className="flex items-center gap-2">
@@ -905,7 +961,6 @@
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {/* ジャンル選択 */}
                       <select 
                         value={newGenre} 
                         onChange={e => setNewGenre(e.target.value)} 
@@ -958,7 +1013,6 @@
                         })}
                       </div>
 
-                      {/* タグ直接入力・追加 */}
                       <div className="flex gap-1.5 mt-1">
                         <input
                           type="text"
@@ -1014,8 +1068,11 @@
                     const isMemoExpanded = !!expandedMemos[work.id];
                     const currentInput = sceneInputs[work.id] || { tags: [] };
 
+                    // ★ 非表示のシーンを除外してカウント・並び替え
+                    const visibleScenes = (work.scenes || []).filter(s => !s.isHidden);
+
                     const sceneSort = sceneSortMap[work.id] || 'chapter-asc';
-                    const sortedScenes = [...(work.scenes || [])].sort((a, b) => {
+                    const sortedScenes = [...visibleScenes].sort((a, b) => {
                       if (sceneSort === 'chapter-asc') {
                         const numA = parseFloat(a.chapter) || 0;
                         const numB = parseFloat(b.chapter) || 0;
@@ -1043,7 +1100,6 @@
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                              {/* 編集時のジャンル選択 */}
                               <select 
                                 value={editWorkData.genre || ''} 
                                 onChange={e => setEditWorkData({ ...editWorkData, genre: e.target.value })} 
@@ -1067,10 +1123,9 @@
                                 </select>
                               </div>
 
-                              <input type="text" placeholder="掲載サイト" value={editWorkData.site} onChange={e => setEditWorkData({...editWorkData, site: e.target.value})} className="p-1.5 rounded border text-xs" />
+                              <input type="text" placeholder="掲載サイト" value={editWorkData.site} onChange={e => setEditWorkData({...editWorkData, site: e.target.value})} className="flex-1 p-1.5 rounded border text-xs" />
                             </div>
 
-                            {/* 編集時のタグ選択UI */}
                             <div className="flex flex-col gap-1.5 border p-2 rounded bg-white">
                               <div className="flex justify-between items-center">
                                 <span className="font-bold text-gray-700">タグを選択 (複数選択可能):</span>
@@ -1153,7 +1208,7 @@
                             onClick={() => toggleExpand(work.id)} 
                             className={`p-3 flex gap-3 cursor-pointer select-none active:bg-gray-50 ${isOpen ? 'border-b' : ''}`}
                           >
-                            {/* 左側: 表紙画像 ＋ アクションボタン */}
+                            {/* 左側: 表紙画像 ＋ アクションボタン（非表示ボタン追加） */}
                             <div className="flex flex-col items-center flex-shrink-0">
                               {work.image ? (
                                 <img 
@@ -1180,6 +1235,15 @@
                                   <IconPencil />
                                 </button>
                                 <span className="text-gray-300 text-[9px]">|</span>
+                                {/* ★ 作品を非表示にするボタン */}
+                                <button 
+                                  onClick={(e) => toggleHideWork(work.id, e)} 
+                                  title="この作品を非表示にする（人に紹介するとき隠す）" 
+                                  className="p-0.5 hover:bg-gray-200 rounded"
+                                >
+                                  <IconEyeOff />
+                                </button>
+                                <span className="text-gray-300 text-[9px]">|</span>
                                 <button 
                                   onClick={(e) => deleteWork(work.id, e)} 
                                   title="作品を削除" 
@@ -1204,7 +1268,7 @@
                                   
                                   <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                                     {work.genre && (
-                                      <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold border border-amber-200">
+                                      <span className="text-[10px] bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded font-bold border border-slate-300">
                                         📁 {work.genre}
                                       </span>
                                     )}
@@ -1216,7 +1280,7 @@
                                 </div>
                                 
                                 <div className="flex items-center gap-1 flex-shrink-0 pt-0.5">
-                                  <span className="text-[10px] text-gray-400 mr-0.5">{work.scenes?.length || 0}件</span>
+                                  <span className="text-[10px] text-gray-400 mr-0.5">{visibleScenes.length}件</span>
                                   {isOpen ? <IconUp /> : <IconDown />}
                                 </div>
                               </div>
@@ -1247,7 +1311,7 @@
                           <div className="bg-gray-50 p-3">
                             <div className="flex justify-between items-center mb-2">
                               <h3 className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                                <IconBookmark /> Bookmark ({work.scenes?.length || 0})
+                                <IconBookmark /> Bookmark ({visibleScenes.length})
                               </h3>
                               
                               <select 
@@ -1373,6 +1437,10 @@
                                           <button onClick={(e) => startEditScene(scene, e)} className="p-0.5 hover:bg-gray-100 rounded" title="編集">
                                             <IconPencilSmall />
                                           </button>
+                                          {/* ★ Bookmarkを非表示にするボタン */}
+                                          <button onClick={(e) => toggleHideScene(work.id, scene.id, e)} className="p-0.5 hover:bg-gray-100 rounded" title="このBookmarkを非表示にする">
+                                            <IconEyeOff />
+                                          </button>
                                           <button onClick={() => deleteScene(work.id, scene.id)} className="p-0.5 hover:bg-gray-100 rounded" title="削除">
                                             <IconTrashSmall />
                                           </button>
@@ -1491,7 +1559,7 @@
             </>
           )}
 
-          {/* 設定モーダル */}
+          {/* 設定モーダル（パスワード付き非表示管理を追加） */}
           {isSettingsOpen && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-xl max-w-sm w-full p-4 shadow-xl flex flex-col gap-3.5 max-h-[90vh] overflow-y-auto">
@@ -1535,7 +1603,7 @@
                     <button 
                       type="button" 
                       onClick={handleAddMasterGenre} 
-                      className="px-3 py-1.5 bg-amber-700 text-white rounded font-bold text-xs"
+                      className="px-3 py-1.5 bg-slate-800 text-white rounded font-bold text-xs"
                     >
                       追加
                     </button>
@@ -1598,9 +1666,101 @@
                   </div>
                 </div>
 
+                {/* ★ パスワード付き非表示一覧管理エリア */}
+                <div className="flex flex-col gap-2 text-xs border-t pt-3 bg-amber-50/70 -mx-4 px-4 py-3 border-amber-200">
+                  <label className="font-bold text-amber-900 flex items-center gap-1">
+                    <span>🔒 非表示作品・Bookmarkの管理</span>
+                  </label>
+                  
+                  {!isSecretUnlocked ? (
+                    <form onSubmit={handleUnlockSecret} className="flex flex-col gap-1.5">
+                      <p className="text-amber-800 text-[11px]">パスワードを入力すると、隠した作品やBookmarkの解除ができます。</p>
+                      <div className="flex gap-1.5">
+                        <input
+                          type="password"
+                          placeholder="パスワードを入力"
+                          value={secretPasswordInput}
+                          onChange={e => setSecretPasswordInput(e.target.value)}
+                          className="flex-1 p-1.5 border rounded text-xs bg-white"
+                        />
+                        <button type="submit" className="px-3 py-1 bg-amber-700 text-white rounded font-bold text-xs hover:bg-amber-800">
+                          解除
+                        </button>
+                      </div>
+                      {secretPassError && <p className="text-red-600 text-[10px]">パスワードが違います</p>}
+                    </form>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-1 border-b pb-1">
+                        <button
+                          type="button"
+                          onClick={() => setSecretTab('works')}
+                          className={`flex-1 py-1 text-center font-bold text-xs rounded ${secretTab === 'works' ? 'bg-amber-700 text-white' : 'bg-amber-100 text-amber-800'}`}
+                        >
+                          隠した作品 ({works.filter(w => w.isHidden).length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSecretTab('scenes')}
+                          className={`flex-1 py-1 text-center font-bold text-xs rounded ${secretTab === 'scenes' ? 'bg-amber-700 text-white' : 'bg-amber-100 text-amber-800'}`}
+                        >
+                          隠したBookmark ({works.flatMap(w => (w.scenes || []).filter(s => s.isHidden)).length})
+                        </button>
+                      </div>
+
+                      {/* 隠した作品リスト */}
+                      {secretTab === 'works' && (
+                        <div className="max-h-40 overflow-y-auto flex flex-col gap-1.5 bg-white p-2 rounded border border-amber-200">
+                          {works.filter(w => w.isHidden).length === 0 ? (
+                            <p className="text-center text-gray-400 py-3 text-[11px]">非表示の作品はありません</p>
+                          ) : (
+                            works.filter(w => w.isHidden).map(w => (
+                              <div key={w.id} className="flex justify-between items-center bg-gray-50 p-1.5 rounded border text-[11px]">
+                                <span className="font-bold truncate max-w-[170px]">{w.title}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleHideWork(w.id)}
+                                  className="text-xs text-blue-600 hover:underline flex items-center gap-0.5 font-bold"
+                                >
+                                  <IconEye /> 再表示
+                                </button>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+
+                      {/* 隠したBookmarkリスト */}
+                      {secretTab === 'scenes' && (
+                        <div className="max-h-40 overflow-y-auto flex flex-col gap-1.5 bg-white p-2 rounded border border-amber-200">
+                          {works.flatMap(w => (w.scenes || []).filter(s => s.isHidden).map(s => ({ workTitle: w.title, workId: w.id, scene: s }))).length === 0 ? (
+                            <p className="text-center text-gray-400 py-3 text-[11px]">非表示のBookmarkはありません</p>
+                          ) : (
+                            works.flatMap(w => (w.scenes || []).filter(s => s.isHidden).map(s => ({ workTitle: w.title, workId: w.id, scene: s }))).map(item => (
+                              <div key={item.scene.id} className="flex justify-between items-center bg-gray-50 p-1.5 rounded border text-[11px]">
+                                <div className="truncate max-w-[170px]">
+                                  <span className="text-[10px] text-gray-500 font-bold block">{item.workTitle}</span>
+                                  <span>{item.scene.chapter ? `${item.scene.chapter}話 ` : ''}{item.scene.memo || '(画像/メモ)'}</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleHideScene(item.workId, item.scene.id)}
+                                  className="text-xs text-blue-600 hover:underline flex items-center gap-0.5 font-bold flex-shrink-0 ml-1"
+                                >
+                                  <IconEye /> 再表示
+                                </button>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex justify-end gap-2 pt-2 border-t mt-1">
                   <button onClick={() => setIsSettingsOpen(false)} className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs rounded font-bold">
-                    キャンセル
+                    閉じる
                   </button>
                   <button 
                     onClick={() => {
